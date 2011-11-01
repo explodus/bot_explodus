@@ -378,7 +378,14 @@ Location * Bot::closest_food( const Location &loc )
   }
 
   sort(state.food.begin(), state.food.end(), sort_food);
-	for (std::vector<Location>::size_type 
+
+	if (state.food.size())
+		l = *state.food.begin();
+
+	if (state.myAnts.size()>100)
+		return l;
+
+	for (std::vector<Location*>::size_type 
 		  i(0)
 		, cnt(state.food.size())
 		; i < cnt
