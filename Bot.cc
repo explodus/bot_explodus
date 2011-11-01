@@ -17,8 +17,10 @@ namespace
     find_by_loc(const Location * l) : loc(l) {}
     inline bool operator()(const calc::Path& t_) const
     { return t_==loc && t_.turn_counter == 0; }
-		inline bool operator()(const calc::Vertex& t_) const
-		{ return t_==loc; }
+		inline bool operator()(const Location& t_) const
+		{ return t_==*loc; }
+		inline bool operator()(const Location* t_) const
+		{ return *t_==*loc; }
   };
 
   template<typename Type, typename Compare = std::less<Type> >
@@ -31,8 +33,8 @@ namespace
 
 bool calc::Path::astar( State &state )
 {
-	typedef std::deque<Vertex> t_dvertex;
-	typedef std::vector<Vertex> t_vvertex;
+	typedef std::deque<Location*> t_dvertex;
+	typedef std::vector<Location*> t_vvertex;
 	t_dvertex olist; // open
 	t_vvertex clist; // closed
 
@@ -52,26 +54,20 @@ bool calc::Path::astar( State &state )
           return true;
       }
 
-		  Vertex v = olist.front();
+		  Location *v = olist.front();
 
-		  if (v == dest || olist.size() > astar_break)
+		  if (*v == *dest || olist.size() > astar_break)
 			  break;
 
       olist.pop_front();
 
-      cost -= v.weightcosts();
+      cost -= v->weightcosts();
 
 		  for(int d(e_north); d<TDIRECTIONS_SIZE; ++d)
 		  { // expand vertex
-			  Location *loc(state.getLocation(*v.loc, static_cast<TDIRECTIONS>(d)));
+			  Location *loc(state.getLocation(*v, static_cast<TDIRECTIONS>(d)));
 
-        //if (loc->isWater /*|| !loc->isVisible*/)
-        //{
-        //  clist.push_back(v);
-        //  continue;
-        //}
-        //
-        if (loc->isWater || loc->ant != -1)
+        if (loc->isWater || loc->ant != -1/* || !loc->isVisible*/)
         {
           clist.push_back(v);
           continue;
@@ -84,50 +80,47 @@ bool calc::Path::astar( State &state )
 			  if (vi != clist.end())
 				  continue;
 
-			  Vertex successor(loc);
+			  Location *successor(loc);
 
         unsigned int new_weight = 
-          v.loc->weight + (v.loc->cost + successor.loc->cost); 
-			  //unsigned int new_weight = 
-     //       (v.loc->weightcosts() + successor.loc->weightcosts())
-     //     /*+ manhattan_method(*v.loc, *successor.loc)*/;
+          v->weight + (v->cost + successor->cost); 
 
 			  t_dvertex::iterator vd(std::find_if(
             olist.begin()
           , olist.end()
-          , find_by_loc(successor.loc)));
-			  if (vd != olist.end() && new_weight >= v.weightcosts())
+          , find_by_loc(successor)));
+			  if (vd != olist.end() && new_weight >= v->weightcosts())
 				  continue;
 
-			  successor.prev.reset(new Vertex(v));
-			  successor.loc->weight = new_weight;
+				successor->prev = v;
+			  successor->cost = new_weight;
 
 			  if (vd != olist.end())
 				  vd = olist.erase(vd);
 
 			  olist.push_back(successor);
-        cost += successor.weightcosts();
+        cost += successor->weightcosts();
 		  }
 		
-		  std::sort(olist.begin(), olist.end(), std::less<Vertex>());
+		  std::sort(olist.begin(), olist.end(), pless<Location>());
 		
 		  clist.push_back(v);
 	  } while (!olist.empty());
 
-    state.bug << "path olist size: " << olist.size() << "\n";
+    state.bug << "path olist size: " << olist.size() << endl;
 
     if (olist.empty())
 		  return false;
 
-	  Vertex v = olist.front();
+	  Location *v = olist.front();
 	
-	  while(v.prev)
+	  while(v->prev)
 	  {
 		  nodes.push_front(v);
-		  v = *v.prev;
+		  v = v->prev;
 	  }
     
-    state.bug << "path: " << *this << "\n";
+    state.bug << "path: " << *this << endl;
   }
   catch (std::exception &e)
   {
@@ -146,22 +139,6 @@ bool calc::Path::astar( State &state )
 
   return true;
 }
-
-inline ostream& operator<<(ostream &os, const calc::Path &p)
-{
-  os << *p.start.loc << "/";
-  os << *p.dest.loc << " ";
-	for(calc::Path::t_vertex::const_iterator 
-		  itb(p.nodes.begin())
-		, ite(p.nodes.end())
-		; itb!=ite
-		; ++itb)
-		if (itb->loc)
-			os << *itb->loc << "->";
-
-	return os;
-};
-
 
 //constructor
 Bot::Bot()
@@ -195,16 +172,20 @@ void Bot::makeMoves()
 	if (state.turn > 998)
 		return;
 
+	state.bug << "turn " << state.turn << ":" << endl;
+
   int d(0);
 
   try
   {
-  /*  if (state.myAnts.size() > 50)
-      calc::Path::astar_break = 75;
-    else */if (state.myAnts.size() > 150)
-      calc::Path::astar_break = 40;
+		if (state.myAnts.size() < 50)
+			calc::Path::astar_break = 125;
+		else if (state.myAnts.size() > 150)
+      calc::Path::astar_break = 48;
     else
-      calc::Path::astar_break = 80;
+      calc::Path::astar_break = 96;
+
+		state.bug << "ant_count " << state.myAnts.size() << endl;;
 
     //picks out moves for each ant
     for(std::vector<Location*>::size_type 
@@ -213,6 +194,8 @@ void Bot::makeMoves()
       ; ++ant)
     {
       Location* ant_loc(state.myAnts[ant]);
+
+			state.bug << "ant: " << ant << endl;;
 
       if (state.timer.getTime() > 450)
         break;
@@ -231,70 +214,83 @@ void Bot::makeMoves()
       calc::Path* p(0);
       if (o == orders.end())
       { // recalculate
-
 				calc::Path *ptmp(0);
-				if (ant_count > 200)
 				{
-					calc::Path ptmp_enemy(
-						  calc::Vertex(ant_loc)
-						, calc::Vertex(closest_enemy(*ant_loc))
-						, state);
-					calc::Path ptmp_center(
-						  calc::Vertex(ant_loc)
-						, calc::Vertex(&state.grid[state.rows/2][state.cols/2].loc)
-						, state);
-					if (ptmp_enemy.dest.loc)
+					calc::Path ptmp_food, ptmp_hill, ptmp_enemy, ptmp_center;
+
+					if (ant_count > 150)
+					{
+						ptmp_enemy = calc::Path(
+							  ant_loc
+							, closest_enemy(*ant_loc)
+							, state);
+						calc::Path::astar_break = 24;
+						ptmp_center = calc::Path(
+							  ant_loc
+							, &state.grid[state.rows/2][state.cols/2].loc
+							, state);
+					}
+					else
+					{
+						ptmp_food = calc::Path(
+								ant_loc
+							, closest_food(*ant_loc)
+							, state);
+						ptmp_hill = calc::Path(
+								ant_loc
+							, closest_hill(*ant_loc)
+							, state);
+						ptmp_enemy = calc::Path(
+								ant_loc
+							, closest_enemy(*ant_loc)
+							, state);
+						calc::Path::astar_break = 24;
+						ptmp_center = calc::Path(
+								ant_loc
+							, &state.grid[state.rows/2][state.cols/2].loc
+							, state);
+					}
+
+					if (ptmp_hill.dest)
+						ptmp = &ptmp_hill;
+					else if (ptmp_food.dest)
+						ptmp = &ptmp_food;
+					else if (ptmp_enemy.dest)
 						ptmp = &ptmp_enemy;
 					else
 						ptmp = &ptmp_center;
+					if (ptmp)
+					{
+						orders.push_back(*ptmp); 
+						p = &orders.back(); 
+						o = orders.end()-1;	 
+					}
 				}
-				else
-				{
-					calc::Path ptmp_food(
-							calc::Vertex(ant_loc)
-						, calc::Vertex(closest_food(*ant_loc))
-						, state);
-					calc::Path ptmp_hill(
-							calc::Vertex(ant_loc)
-						, calc::Vertex(closest_hill(*ant_loc))
-						, state);
-
-					Location *loc_enemy(closest_enemy(*ant_loc));
-					calc::Path ptmp_enemy(
-							calc::Vertex(ant_loc)
-						, calc::Vertex(loc_enemy?loc_enemy:&state.grid[state.rows/2][state.cols/2].loc)
-						, state);
-
-					if (ptmp_hill.dest.loc)
-						ptmp = &ptmp_hill;
-					else if (ptmp_food.dest.loc)
-						ptmp = &ptmp_food;
-					else if (ptmp_enemy.dest.loc)
-						ptmp = &ptmp_enemy;
-				}
-        
-				if (ptmp)
-        {
-          orders.push_back(*ptmp); 
-          p = &orders.back(); 
-          o = orders.end()-1;	 
-        }
       }
 		  else
         p = &*o;
 
-      if (p && p->nodes.size() && *ant_loc== *p->start.loc)
+			if (p)
+				state.bug 
+					<< "try akt move " 
+					<< p->nodes.size() 
+					<< " "
+					<< *p->start 
+					<< " ant_loc " 
+					<< *ant_loc << endl;
+
+      if (p && p->nodes.size() && *p == ant_loc)
       {
 			  ++p->turn_counter;
-        calc::Vertex v = p->nodes.front();
+        Location *v = p->nodes.front();
 
-        d = state.get_direction(*ant_loc, *v.loc);
+        d = state.get_direction(*ant_loc, *v);
 
         state.bug 
           << "akt move " 
-          << *v.loc 
+          << *v 
           << " ant_loc " 
-          << *ant_loc << " direction " << d << "\n";
+          << *ant_loc << " direction " << d << endl;
 
         Location *loc = state.getLocation(*ant_loc, d);
         if(loc && !loc->isWater && loc->ant==-1 && ant_loc->ant > -1)
@@ -305,7 +301,7 @@ void Bot::makeMoves()
             while (itb != orders.end())
             {
               if (&*itb != p)
-                if (*itb->dest.loc == *loc)
+                if (*itb->dest == *loc)
                 {
                   itb = orders.erase(itb);
                   continue;
@@ -316,7 +312,7 @@ void Bot::makeMoves()
           
           p->nodes.pop_front();
           state.makeMoves(*ant_loc, *loc, static_cast<TDIRECTIONS>(d));
-          p->start.loc = loc;
+          p->start = loc;
 				  continue;
         }
 
@@ -368,8 +364,13 @@ namespace
 
 Location * Bot::closest_food( const Location &loc )
 {
+	state.bug << "closest_food start" << std::endl;
   Location * l(0);
-  double min_dist=std::numeric_limits<double>::max(), dist(min_dist);
+
+	if (state.food.size()==0)
+		return l;
+
+	double min_dist=std::numeric_limits<double>::max(), dist(min_dist);
   for (std::vector<Location>::size_type 
       i(0)
     , cnt(state.food.size())
@@ -391,17 +392,19 @@ Location * Bot::closest_food( const Location &loc )
 			  orders.begin()
 			, orders.end()
 			, find_by_loc(state.food[i]));
-		calc::Path* p(0);
 		if (o == orders.end())
 			return state.food[i];
 	}
-	
+
+	state.bug << "closest_food end" << std::endl;
   return l;
 }
 
 Location * Bot::closest_hill( const Location &loc )
 {
   Location * l(0);
+
+	state.bug << "closest_hill start" << std::endl;
 
   if (state.enemyHills.size()==0)
     return l;
@@ -420,12 +423,16 @@ Location * Bot::closest_hill( const Location &loc )
   sort(state.enemyHills.begin(), state.enemyHills.end(), sort_hill);
 	if (state.enemyHills.size())
 		l = *state.enemyHills.begin();
+
+	state.bug << "closest_hill end" << std::endl;
   return l;
 }
 
 Location * Bot::closest_enemy( const Location &loc )
 {
   Location * l(0);
+
+	state.bug << "closest_enemy start" << std::endl;
 
 	if (state.myAnts.size() < 50)
 		return l;
@@ -445,7 +452,9 @@ Location * Bot::closest_enemy( const Location &loc )
 	if (state.enemyAnts.size())
 		l = *state.enemyAnts.begin();
 
-  return l;
+	state.bug << "closest_enemy end" << std::endl;
+
+	return l;
 }
 
 Location * Bot::closest_ant( const Location &loc )

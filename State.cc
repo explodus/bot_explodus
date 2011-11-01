@@ -62,6 +62,7 @@ void State::reset()
 //outputs move information to the engine
 void State::makeMoves(Location &loc, Location &dest, TDIRECTIONS direction)
 {
+	bug << "make move from " << loc << " to " << dest << endl;;
   moves m;
   m.from = &loc;
   m.to = &dest;
@@ -86,7 +87,8 @@ void State::endMoves()
       << itb->from->col 
       << " " 
       << CDIRECTIONS[itb->d] 
-    << "\n";
+    << endl;;
+		bug << "make move real from " << *itb->from << " to " << *itb->to << endl;;
   }
   _moves.clear();
 }

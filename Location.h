@@ -9,6 +9,8 @@
 /*
 struct for representing locations in the grid.
 */
+struct Location;
+
 struct Location
 {
   bool isVisible, isWater, isHill, isFood, isDead;
@@ -22,13 +24,16 @@ struct Location
 
   long long cost;
   long long weight;
+
+	Location *prev;
   
   inline Location() 
     : row(0)
     , col(0)
     , isWater(0)
-    , cost(1)
-    , weight(1) 
+    , cost(10)
+    , weight(10)
+		, prev(0)
   {
     reset();
   }
@@ -37,8 +42,9 @@ struct Location
     : row(r)
     , col(c)
     , isWater(0)
-    , cost(1)
-    , weight(1) 
+    , cost(10)
+    , weight(10) 
+		, prev(0)
   {
     reset();
   }
@@ -57,6 +63,7 @@ struct Location
     , dist_hill(l.dist_hill)
     , cost(l.cost)
     , weight(l.weight) 
+		, prev(l.prev)
   {
   }
 
@@ -64,7 +71,9 @@ struct Location
   {
     isVisible = isHill = isFood = isDead = 0;
     ant = hillPlayer = -1;
-    cost = isWater? 999: 10;
+		cost = 10;
+    weight = isWater? 999: 10;
+		prev = 0;
   }
 
   inline Location& operator=( const Location &l ) 
@@ -85,14 +94,20 @@ struct Location
     isWater = l.isWater;
     cost = l.cost;
     weight = l.weight;
+		prev = l.prev;
     return *this;
   }
 
-  inline unsigned int weightcosts() const
+  inline long long weightcosts() const
   { return cost+weight; }
 
 	inline bool operator==( const Location &l ) const 
 	{ return (row == l.row && col == l.col); }
+
+	inline bool operator>( const Location & rhs ) const
+	{ return weightcosts() > rhs.weightcosts(); }
+	inline bool operator<( const Location & rhs ) const
+	{ return weightcosts() < rhs.weightcosts(); }
 };
 
 inline std::ostream& operator<<(std::ostream &os, const Location &l)

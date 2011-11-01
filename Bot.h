@@ -6,6 +6,11 @@
 #include <vector>
 #include <list>
 #include <limits>
+#include <iostream>
+#include <stdio.h>
+#include <cstdlib>
+#include <cmath>
+#include <iterator>
 #ifdef _WIN64
 # include <memory>
 #else
@@ -14,44 +19,15 @@
 
 namespace calc
 {
-  class Vertex
-  {
-	public:
-		Location *loc;
-		std::tr1::shared_ptr<Vertex> prev;
-
-    inline Vertex(Location *l = 0) 
-      : loc(l), prev()
-    {
-		}
-
-    inline Vertex(const Vertex &v) 
-      : loc(v.loc), prev(v.prev)
-    { }
-
-		inline unsigned int weightcosts() const
-		{ return (loc!=0) ? loc->weightcosts() : 2; }
-
-    inline bool operator>( const Vertex & rhs ) const
-    { return weightcosts() > rhs.weightcosts(); }
-    inline bool operator<( const Vertex & rhs ) const
-    { return weightcosts() < rhs.weightcosts(); }
-    inline bool operator==( const Vertex& rhs ) const 
-    { return (*loc == *rhs.loc); }
-		inline bool operator==( const Location *l ) const 
-		{ return *loc == *l; }
-
-  };
-
   struct Path
   {
-    Vertex start;
-    Vertex dest;
+    Location* start;
+    Location* dest;
 
-    unsigned int cost;
+    long long cost;
 		unsigned int turn_counter;
 
-    typedef std::deque<Vertex> t_vertex;
+    typedef std::deque<Location*> t_vertex;
     t_vertex nodes;
 
     static int astar_break;
@@ -64,15 +40,17 @@ namespace calc
     {}
 
     Path( 
-        const Vertex & s
-      , const Vertex & d
+        Location* s
+      , Location* d
       , State &state )
       : start( s )
       , dest( d )
       , cost(std::numeric_limits<unsigned int>::max())
 			, turn_counter(0)
     {
-      if (start.loc && dest.loc && astar(state))
+			state.bug << "before astar" << std::endl;
+
+      if (start && dest && astar(state))
       {
         cost = 0;
         for (t_vertex::const_iterator 
@@ -80,8 +58,10 @@ namespace calc
           , ite(nodes.end())
           ; itb != ite
           ; ++itb)
-          cost += itb->weightcosts();
+          cost += (*itb)->weightcosts();
+				state.bug << "path costs: "<< cost << std::endl;
       }
+			state.bug << "after astar" << std::endl;
     }
 
     Path( const Path & p) 
@@ -89,7 +69,7 @@ namespace calc
       , dest(p.dest)
       , cost(p.cost)
 			, turn_counter(p.turn_counter)
-      , nodes(p.nodes)
+			, nodes(p.nodes)
     {
     }
 
@@ -99,7 +79,7 @@ namespace calc
       dest = p.dest;
       cost = p.cost;
 			turn_counter = p.turn_counter;
-      nodes = p.nodes;
+			nodes = p.nodes;
       return *this;
     }
 
@@ -115,6 +95,24 @@ namespace calc
   };
 
   typedef std::vector<Path> t_order;
+
+	inline std::ostream& operator<<(std::ostream &os, const calc::Path &p)
+	{
+		if (p.start)
+			os << *p.start << "/";
+		if (p.dest)
+			os << *p.dest;
+		for(calc::Path::t_vertex::const_iterator 
+			  itb(p.nodes.begin())
+			, ite(p.nodes.end())
+			; itb!=ite
+			; ++itb)
+			if (*itb)
+				os << "->" << **itb ;
+
+		return os;
+	}
+
 }
 
 /*
