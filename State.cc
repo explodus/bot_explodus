@@ -24,6 +24,64 @@ void State::setup()
   for(int row(0); row<rows; ++row)
     for(int col(0); col<cols; ++col)
       grid[row][col].loc = Location(row, col);
+
+	for(int row(1); row<rows-1; ++row)
+	{
+		for(int col(1); col<cols-1; ++col)
+		{
+			grid[row][col].loc.around[e_north] = &grid[row-1][col].loc;
+			grid[row][col].loc.around[e_east] = &grid[row][col+1].loc;
+			grid[row][col].loc.around[e_south] = &grid[row+1][col].loc;
+			grid[row][col].loc.around[e_west] = &grid[row][col-1].loc;
+		}
+	}
+
+	for(int row(1); row<rows-1; ++row)
+	{
+		grid[row][0].loc.around[e_north] = &grid[row-1][0].loc;
+		grid[row][0].loc.around[e_east] = &grid[row][1].loc;
+		grid[row][0].loc.around[e_south] = &grid[row+1][0].loc;
+		grid[row][0].loc.around[e_west] = &grid[row][cols-1].loc;
+
+		grid[row][cols-1].loc.around[e_north] = &grid[row-1][0].loc;
+		grid[row][cols-1].loc.around[e_east] = &grid[row][0].loc;
+		grid[row][cols-1].loc.around[e_south] = &grid[row+1][0].loc;
+		grid[row][cols-1].loc.around[e_west] = &grid[row][cols-2].loc;
+	}
+
+	for(int col(1); col<cols-1; ++col)
+	{
+		grid[0][col].loc.around[e_north] = &grid[rows-1][col].loc;
+		grid[0][col].loc.around[e_east] = &grid[0][col+1].loc;
+		grid[0][col].loc.around[e_south] = &grid[1][col].loc;
+		grid[0][col].loc.around[e_west] = &grid[0][col-1].loc;
+
+		grid[rows-1][col].loc.around[e_north] = &grid[rows-2][col].loc;
+		grid[rows-1][col].loc.around[e_east] = &grid[rows-1][col+1].loc;
+		grid[rows-1][col].loc.around[e_south] = &grid[0][col].loc;
+		grid[rows-1][col].loc.around[e_west] = &grid[rows-1][col-1].loc;
+	}
+
+	grid[0][0].loc.around[e_north] = &grid[rows-1][0].loc;
+	grid[0][0].loc.around[e_east] = &grid[0][1].loc;
+	grid[0][0].loc.around[e_south] = &grid[1][0].loc;
+	grid[0][0].loc.around[e_west] = &grid[0][cols-1].loc;
+
+	grid[rows-1][0].loc.around[e_north] = &grid[rows-2][0].loc;
+	grid[rows-1][0].loc.around[e_east] = &grid[rows-1][1].loc;
+	grid[rows-1][0].loc.around[e_south] = &grid[rows-1][0].loc;
+	grid[rows-1][0].loc.around[e_west] = &grid[rows-1][cols-1].loc;
+
+	grid[0][cols-1].loc.around[e_north] = &grid[rows-1][cols-1].loc;
+	grid[0][cols-1].loc.around[e_east] = &grid[0][cols-1].loc;
+	grid[0][cols-1].loc.around[e_south] = &grid[1][cols-1].loc;
+	grid[0][cols-1].loc.around[e_west] = &grid[0][cols-2].loc;
+
+	grid[rows-1][cols-1].loc.around[e_north] = &grid[rows-2][cols-1].loc;
+	grid[rows-1][cols-1].loc.around[e_east] = &grid[rows-1][0].loc;
+	grid[rows-1][cols-1].loc.around[e_south] = &grid[0][cols-1].loc;
+	grid[rows-1][cols-1].loc.around[e_west] = &grid[rows-1][cols-2].loc;
+
 };
 
 //resets all non-water squares to land and clears the bots ant vector
@@ -101,14 +159,6 @@ double State::distance(const Location &loc1, const Location &loc2)
     dr = min(d1, rows-d1),
     dc = min(d2, cols-d2);
   return sqrt(static_cast<double>(dr*dr + dc*dc));
-};
-
-//returns the new location from moving in a given direction with the edges wrapped
-Location* State::getLocation(const Location &loc, int direction)
-{
-  return &grid
-    [((loc.row + DIRECTIONS[direction][0] + rows) % rows)]
-  [((loc.col + DIRECTIONS[direction][1] + cols) % cols)].loc;
 };
 
 /*

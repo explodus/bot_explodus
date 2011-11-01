@@ -33,8 +33,8 @@ namespace
 
 bool calc::Path::astar( State &state )
 {
-	t_vertex olist; // open
-	t_vvertex clist; // closed
+	t_location_deque olist; // open
+	t_location_vector clist; // closed
 
   cost = 0;
 
@@ -54,7 +54,7 @@ bool calc::Path::astar( State &state )
 
 		  Location *v = olist.front();
 
-			if (*v == *dest || olist.size() > static_cast<t_vertex::size_type>(astar_break))
+			if (*v == *dest || olist.size() > static_cast<t_location_deque::size_type>(astar_break))
 			  break;
 
       olist.pop_front();
@@ -71,7 +71,7 @@ bool calc::Path::astar( State &state )
           continue;
         }
 
-			  t_vvertex::iterator vi(std::find_if(
+			  t_location_vector::iterator vi(std::find_if(
             clist.begin()
           , clist.end()
           , find_by_loc(loc)));
@@ -83,7 +83,7 @@ bool calc::Path::astar( State &state )
         long long new_weight = 
           v->weight + (v->cost + successor->cost); 
 
-			  t_vertex::iterator vd(std::find_if(
+			  t_location_deque::iterator vd(std::find_if(
             olist.begin()
           , olist.end()
           , find_by_loc(successor)));
@@ -170,13 +170,6 @@ void Bot::makeMoves()
 
   try
   {
-		if (state.myAnts.size() < 50)
-			calc::Path::astar_break = 125;
-		else if (state.myAnts.size() > 150)
-      calc::Path::astar_break = 48;
-    else
-      calc::Path::astar_break = 96;
-
 		state.bug << "ant_count " << state.myAnts.size() << endl;;
 
     //picks out moves for each ant
@@ -210,13 +203,22 @@ void Bot::makeMoves()
 				{
 					calc::Path ptmp_food, ptmp_hill, ptmp_enemy, ptmp_center;
 
-					if (ant_count > 150)
+					if (ant_count > 100)
 					{
+						calc::Path::astar_break = 100;
+						ptmp_hill = calc::Path(
+							  ant_loc
+							, closest_hill(*ant_loc)
+							, state);
+						calc::Path::astar_break = 24;
+						ptmp_food = calc::Path(
+							  ant_loc
+							, closest_food(*ant_loc)
+							, state);
 						ptmp_enemy = calc::Path(
 							  ant_loc
 							, closest_enemy(*ant_loc)
 							, state);
-						calc::Path::astar_break = 24;
 						ptmp_center = calc::Path(
 							  ant_loc
 							, &state.grid[state.rows/2][state.cols/2].loc
@@ -224,19 +226,21 @@ void Bot::makeMoves()
 					}
 					else
 					{
+						calc::Path::astar_break = 100;
+						ptmp_hill = calc::Path(
+							  ant_loc
+							, closest_hill(*ant_loc)
+							, state);
+						calc::Path::astar_break = 96;
 						ptmp_food = calc::Path(
 								ant_loc
 							, closest_food(*ant_loc)
 							, state);
-						ptmp_hill = calc::Path(
-								ant_loc
-							, closest_hill(*ant_loc)
-							, state);
+						calc::Path::astar_break = 24;
 						ptmp_enemy = calc::Path(
 								ant_loc
 							, closest_enemy(*ant_loc)
 							, state);
-						calc::Path::astar_break = 24;
 						ptmp_center = calc::Path(
 								ant_loc
 							, &state.grid[state.rows/2][state.cols/2].loc

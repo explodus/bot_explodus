@@ -2,8 +2,6 @@
 #define BOT_H_
 
 #include "State.h"
-#include <queue>
-#include <vector>
 #include <list>
 #include <limits>
 #include <iostream>
@@ -29,9 +27,7 @@ namespace calc
     long long cost;
 		unsigned int turn_counter;
 
-    typedef std::deque<Location*> t_vertex;
-		typedef std::vector<Location*> t_vvertex;
-    t_vertex nodes;
+    t_location_deque nodes;
 
     static int astar_break;
 
@@ -56,7 +52,7 @@ namespace calc
       if (start && dest && astar(state))
       {
         cost = 0;
-        for (t_vertex::const_iterator 
+        for (t_location_deque::const_iterator 
             itb(nodes.begin())
           , ite(nodes.end())
           ; itb != ite
@@ -96,7 +92,7 @@ namespace calc
 
     bool astar(State &state);
 
-		inline void fill_nodes( t_vertex &olist ) 
+		inline void fill_nodes( t_location_deque &olist ) 
 		{
 			Location *v(olist.front());
 			while(v->prev)
@@ -115,7 +111,7 @@ namespace calc
 			os << *p.start << "/";
 		if (p.dest)
 			os << *p.dest;
-		for(calc::Path::t_vertex::const_iterator 
+		for(t_location_deque::const_iterator 
 			  itb(p.nodes.begin())
 			, ite(p.nodes.end())
 			; itb!=ite

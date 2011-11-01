@@ -5,11 +5,16 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <cmath>
+#include <queue>
+#include <vector>
 
 /*
 struct for representing locations in the grid.
 */
 struct Location;
+
+typedef std::deque<Location*> t_location_deque;
+typedef std::vector<Location*> t_location_vector;
 
 struct Location
 {
@@ -26,6 +31,8 @@ struct Location
   long long weight;
 
 	Location *prev;
+
+	t_location_vector around;
   
   inline Location() 
     : row(0)
@@ -34,6 +41,7 @@ struct Location
     , cost(10)
     , weight(10)
 		, prev(0)
+		, around(4)
   {
     reset();
   }
@@ -45,6 +53,7 @@ struct Location
     , cost(10)
     , weight(10) 
 		, prev(0)
+		, around(4)
   {
     reset();
   }
@@ -64,6 +73,7 @@ struct Location
     , cost(l.cost)
     , weight(l.weight) 
 		, prev(l.prev)
+		, around(l.around)
   {
   }
 
@@ -95,6 +105,7 @@ struct Location
     cost = l.cost;
     weight = l.weight;
 		prev = l.prev;
+		around = l.around;
     return *this;
   }
 

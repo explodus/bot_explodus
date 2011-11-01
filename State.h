@@ -79,7 +79,15 @@ struct State
 		void endMoves();
 
     double distance(const Location &loc1, const Location &loc2);
-    Location* getLocation(const Location &startLoc, int direction);
+		////returns the new location from moving in a given direction with the edges wrapped
+		inline Location* State::getLocation(const Location &loc, int direction)
+		{
+			return &grid
+				[((loc.row + DIRECTIONS[direction][0] + rows) % rows)]
+			[((loc.col + DIRECTIONS[direction][1] + cols) % cols)].loc;
+		}
+		//inline Location* getLocation(const Location &startLoc, int direction)
+		//{ return startLoc.around[direction]; }
 
     TDIRECTIONS get_direction(const Location &start, const Location &dest);
 
