@@ -33,9 +33,7 @@ namespace
 
 bool calc::Path::astar( State &state )
 {
-	typedef std::deque<Location*> t_dvertex;
-	typedef std::vector<Location*> t_vvertex;
-	t_dvertex olist; // open
+	t_vertex olist; // open
 	t_vvertex clist; // closed
 
   cost = 0;
@@ -56,7 +54,7 @@ bool calc::Path::astar( State &state )
 
 		  Location *v = olist.front();
 
-		  if (*v == *dest || olist.size() > astar_break)
+			if (*v == *dest || olist.size() > static_cast<t_vertex::size_type>(astar_break))
 			  break;
 
       olist.pop_front();
@@ -82,10 +80,10 @@ bool calc::Path::astar( State &state )
 
 			  Location *successor(loc);
 
-        unsigned int new_weight = 
+        long long new_weight = 
           v->weight + (v->cost + successor->cost); 
 
-			  t_dvertex::iterator vd(std::find_if(
+			  t_vertex::iterator vd(std::find_if(
             olist.begin()
           , olist.end()
           , find_by_loc(successor)));
@@ -112,14 +110,8 @@ bool calc::Path::astar( State &state )
     if (olist.empty())
 		  return false;
 
-	  Location *v = olist.front();
-	
-	  while(v->prev)
-	  {
-		  nodes.push_front(v);
-		  v = v->prev;
-	  }
-    
+		fill_nodes(olist);
+
     state.bug << "path: " << *this << endl;
   }
   catch (std::exception &e)

@@ -130,9 +130,7 @@ void State::updateVisionInformation()
     sLoc = myAnts[a];
     locQueue.push(sLoc);
 
-    std::vector<std::vector<bool> > visited(
-      rows
-      , std::vector<bool>(cols, 0));
+    std::vector<std::vector<int> > visited(rows, std::vector<int>(cols, 0));
     sLoc->isVisible = 1;
     visited[sLoc->row][sLoc->col] = 1;
 

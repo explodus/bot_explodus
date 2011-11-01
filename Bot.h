@@ -13,6 +13,8 @@
 #include <iterator>
 #ifdef _WIN64
 # include <memory>
+#elif _WIN32
+# include <memory>
 #else
 # include <tr1/memory>
 #endif 
@@ -28,6 +30,7 @@ namespace calc
 		unsigned int turn_counter;
 
     typedef std::deque<Location*> t_vertex;
+		typedef std::vector<Location*> t_vvertex;
     t_vertex nodes;
 
     static int astar_break;
@@ -92,7 +95,17 @@ namespace calc
     { return start == l; }
 
     bool astar(State &state);
-  };
+
+		inline void fill_nodes( t_vertex &olist ) 
+		{
+			Location *v(olist.front());
+			while(v->prev)
+			{
+				nodes.push_front(v);
+				v = v->prev;
+			}
+		}
+	};
 
   typedef std::vector<Path> t_order;
 
