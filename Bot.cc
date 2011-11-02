@@ -203,23 +203,48 @@ void Bot::makeMoves()
 				{
 					calc::Path ptmp_food, ptmp_hill, ptmp_enemy, ptmp_center;
 
-					if (ant_count > 100)
+					if (ant_count > state.enemyAnts.size()*2)
+					{ // only attacking
+						if (state.enemyHills.size())
+						{
+							calc::Path::astar_break = 150;
+							ptmp_hill = calc::Path(
+								  ant_loc
+								, closest_hill(*ant_loc)
+								, state);
+						}
+						else
+						{
+							calc::Path::astar_break = 48;
+							ptmp_enemy = calc::Path(
+								  ant_loc
+								, closest_enemy(*ant_loc)
+								, state);
+						}
+
+						calc::Path::astar_break = 12;
+						ptmp_center = calc::Path(
+							  ant_loc
+							, &state.grid[state.rows/2][state.cols/2].loc
+							, state);
+					}
+					else if (ant_count > 100)
 					{
-						calc::Path::astar_break = 96;
+						calc::Path::astar_break = 125;
 						ptmp_hill = calc::Path(
 							  ant_loc
 							, closest_hill(*ant_loc)
 							, state);
-						calc::Path::astar_break = 48;
+						calc::Path::astar_break = 24;
 						ptmp_food = calc::Path(
 							  ant_loc
 							, closest_food(*ant_loc)
 							, state);
-						calc::Path::astar_break = 24;
-						ptmp_enemy = calc::Path(
-							  ant_loc
-							, closest_enemy(*ant_loc)
-							, state);
+						//calc::Path::astar_break = 24;
+						//ptmp_enemy = calc::Path(
+						//	  ant_loc
+						//	, closest_enemy(*ant_loc)
+						//	, state);
 						calc::Path::astar_break = 12;
 						ptmp_center = calc::Path(
 							  ant_loc
@@ -228,7 +253,7 @@ void Bot::makeMoves()
 					}
 					else
 					{
-						calc::Path::astar_break = 100;
+						calc::Path::astar_break = 72;
 						if (ant_count > 30)
 							ptmp_hill = calc::Path(
 									ant_loc
@@ -431,7 +456,7 @@ Location * Bot::closest_hill( const Location &loc )
 	if (state.enemyHills.size())
 		l = *state.enemyHills.begin();
 
-	if (state.myAnts.size()<50)
+	if (state.myAnts.size()>50)
 		return l;
 
 	for (std::vector<Location*>::size_type 
