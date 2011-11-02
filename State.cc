@@ -402,12 +402,22 @@ istream& operator>>(istream &is, State &state)
 
 void costs_around( State &state, int row, int col, int new_costs )
 {
-  //for(int d(e_north); d<TDIRECTIONS_SIZE; ++d)
-  //{ // expand vertex
-  //  Location *loc(state.getLocation(
-  //      state.grid[row][col].loc
-  //    , static_cast<TDIRECTIONS>(d)));
-  //  if (!loc->isWater)
-  //    loc->cost = new_costs;
-  //}
+	Location& l(state.grid[row][col].loc);
+	if (!l.around[e_north]->isWater)
+		l.around[e_north]->cost = new_costs;
+	if (!l.around[e_east]->isWater)
+		l.around[e_east]->cost = new_costs;
+	if (!l.around[e_south]->isWater)
+		l.around[e_south]->cost = new_costs;
+	if (!l.around[e_west]->isWater)
+		l.around[e_west]->cost = new_costs;
+
+	//for(int d(e_north); d<TDIRECTIONS_SIZE; ++d)
+	//{ // expand vertex
+	//  Location *loc(state.getLocation(
+	//      state.grid[row][col].loc
+	//    , static_cast<TDIRECTIONS>(d)));
+	//  if (!loc->isWater)
+	//    loc->cost = new_costs;
+	//}
 }
