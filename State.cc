@@ -335,7 +335,7 @@ istream& operator>>(istream &is, State &state)
         is >> row >> col;
         state.grid[row][col].loc.isFood = 1;
         state.food.push_back(&state.grid[row][col].loc);
-        costs_around(state, row, col, -20);
+        costs_around(state, row, col, -40);
       }
       else if(inputType == "a") //live ant square
       {
@@ -344,12 +344,12 @@ istream& operator>>(istream &is, State &state)
         if(player == 0)
         {
           state.myAnts.push_back(&state.grid[row][col].loc);
-          costs_around(state, row, col, -2);
+          costs_around(state, row, col, 1);
         }
         else
         {
           state.enemyAnts.push_back(&state.grid[row][col].loc);
-          costs_around(state, row, col, 20);
+          costs_around(state, row, col, 15);
         }
       }
       else if(inputType == "d") //dead ant square
@@ -357,7 +357,7 @@ istream& operator>>(istream &is, State &state)
         is >> row >> col >> state.grid[row][col].loc.ant;
         state.grid[row][col].loc.isDead = 1;
         state.grid[row][col].loc.isFood = 1;
-        state.food.push_back(&state.grid[row][col].loc);
+        //state.food.push_back(&state.grid[row][col].loc);
         costs_around(state, row, col, -5);
       }
       else if(inputType == "h")
@@ -368,12 +368,12 @@ istream& operator>>(istream &is, State &state)
         if(player == 0)
         {
           state.myHills.push_back(&state.grid[row][col].loc);
-          costs_around(state, row, col, -5);
+          costs_around(state, row, col, 20);
         }
         else
         {
           state.enemyHills.push_back(&state.grid[row][col].loc);
-          costs_around(state, row, col, -20);
+          costs_around(state, row, col, -40);
         }
       }
       else if(inputType == "players") //player information
