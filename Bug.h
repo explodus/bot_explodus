@@ -8,6 +8,7 @@
 #endif
 
 //#define DEBUG
+#define TRAIN_ANN
 
 /*
     struct for debugging - this is gross but can be used pretty much like an ofstream,
@@ -65,6 +66,53 @@ inline Bug& operator<<(Bug &bug, const T &t)
     #endif
 
     return bug;
+};
+
+struct Ann
+{
+	std::ofstream file;
+
+	Ann()
+	{
+
+	};
+
+	//opens the specified file
+	inline void open(const std::string &filename)
+	{
+#ifdef TRAIN_ANN
+		file.open(filename.c_str());
+#endif
+	};
+
+	//closes the ofstream
+	inline void close()
+	{
+#ifdef TRAIN_ANN
+		file.close();
+#endif
+	};
+};
+
+//output function for endl
+inline Ann& operator<<(Ann &bug, std::ostream& (*manipulator)(std::ostream&))
+{
+#ifdef TRAIN_ANN
+	bug.file << manipulator;
+#endif
+
+	return bug;
+};
+
+//output function
+template <class T>
+inline Ann& operator<<(Ann &bug, const T &t)
+{
+#ifdef TRAIN_ANN
+	bug.file << t;
+#endif
+
+	return bug;
 };
 
 #endif //BUG_H_

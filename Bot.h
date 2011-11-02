@@ -130,6 +130,7 @@ This struct represents your bot in the game of Ants
 struct Bot
 {
   State state;
+	Ann ann_out;
 
   calc::t_order orders;
 
