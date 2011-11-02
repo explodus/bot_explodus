@@ -205,20 +205,22 @@ void Bot::makeMoves()
 
 					if (ant_count > 100)
 					{
-						calc::Path::astar_break = 100;
+						calc::Path::astar_break = 96;
 						ptmp_hill = calc::Path(
 							  ant_loc
 							, closest_hill(*ant_loc)
 							, state);
-						calc::Path::astar_break = 24;
+						calc::Path::astar_break = 48;
 						ptmp_food = calc::Path(
 							  ant_loc
 							, closest_food(*ant_loc)
 							, state);
+						calc::Path::astar_break = 24;
 						ptmp_enemy = calc::Path(
 							  ant_loc
 							, closest_enemy(*ant_loc)
 							, state);
+						calc::Path::astar_break = 12;
 						ptmp_center = calc::Path(
 							  ant_loc
 							, &state.grid[state.rows/2][state.cols/2].loc
@@ -227,10 +229,11 @@ void Bot::makeMoves()
 					else
 					{
 						calc::Path::astar_break = 100;
-						ptmp_hill = calc::Path(
-							  ant_loc
-							, closest_hill(*ant_loc)
-							, state);
+						if (ant_count > 30)
+							ptmp_hill = calc::Path(
+									ant_loc
+								, closest_hill(*ant_loc)
+								, state);
 						calc::Path::astar_break = 96;
 						ptmp_food = calc::Path(
 								ant_loc
@@ -241,6 +244,7 @@ void Bot::makeMoves()
 								ant_loc
 							, closest_enemy(*ant_loc)
 							, state);
+						calc::Path::astar_break = 12;
 						ptmp_center = calc::Path(
 								ant_loc
 							, &state.grid[state.rows/2][state.cols/2].loc
@@ -291,20 +295,20 @@ void Bot::makeMoves()
         Location *loc = state.getLocation(*ant_loc, d);
         if(loc && !loc->isWater && loc->ant==-1 && ant_loc->ant > -1)
         {
-          if (loc->hillPlayer > 0 || loc->isFood)
-          {
-            calc::t_order::iterator itb(orders.begin());
-            while (itb != orders.end())
-            {
-              if (&*itb != p)
-                if (*itb->dest == *loc)
-                {
-                  itb = orders.erase(itb);
-                  continue;
-                }
-              ++itb;
-            }
-          }
+          //if (loc->hillPlayer > 0 || loc->isFood)
+          //{
+          //  calc::t_order::iterator itb(orders.begin());
+          //  while (itb != orders.end())
+          //  {
+          //    if (&*itb != p)
+          //      if (*itb->dest == *loc)
+          //      {
+          //        itb = orders.erase(itb);
+          //        continue;
+          //      }
+          //    ++itb;
+          //  }
+          //}
           
           p->nodes.pop_front();
           state.makeMoves(*ant_loc, *loc, static_cast<TDIRECTIONS>(d));
@@ -426,6 +430,23 @@ Location * Bot::closest_hill( const Location &loc )
   sort(state.enemyHills.begin(), state.enemyHills.end(), sort_hill);
 	if (state.enemyHills.size())
 		l = *state.enemyHills.begin();
+
+	if (state.myAnts.size()<50)
+		return l;
+
+	for (std::vector<Location*>::size_type 
+		  i(0)
+		, cnt(state.enemyHills.size())
+		; i < cnt
+		; ++i)
+	{
+		calc::t_order::iterator o = std::find_if(
+			  orders.begin()
+			, orders.end()
+			, find_by_loc(state.enemyHills[i]));
+		if (o == orders.end())
+			return state.enemyHills[i];
+	}
 
 	state.bug << "closest_hill end" << std::endl;
   return l;

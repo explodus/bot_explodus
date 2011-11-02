@@ -25,63 +25,31 @@ void State::setup()
     for(int col(0); col<cols; ++col)
       grid[row][col].loc = Location(row, col);
 
-	for(int row(1); row<rows-1; ++row)
+	for(int row(0); row<rows; ++row)
 	{
-		for(int col(1); col<cols-1; ++col)
+		for(int col(0); col<cols; ++col)
 		{
-			grid[row][col].loc.around[e_north] = &grid[row-1][col].loc;
-			grid[row][col].loc.around[e_east] = &grid[row][col+1].loc;
-			grid[row][col].loc.around[e_south] = &grid[row+1][col].loc;
-			grid[row][col].loc.around[e_west] = &grid[row][col-1].loc;
+			if (row == 0)
+				grid[row][col].loc.around[e_north] = &grid[rows-1][col].loc;
+			else
+				grid[row][col].loc.around[e_north] = &grid[row-1][col].loc;
+
+			if (row == rows-1)
+				grid[row][col].loc.around[e_south] = &grid[0][col].loc;
+			else
+				grid[row][col].loc.around[e_south] = &grid[row+1][col].loc;
+
+			if (col == 0)
+				grid[row][col].loc.around[e_west] = &grid[row][cols-1].loc;
+			else
+				grid[row][col].loc.around[e_west] = &grid[row][col-1].loc;
+
+			if (col == cols-1)
+				grid[row][col].loc.around[e_east] = &grid[row][0].loc;
+			else
+				grid[row][col].loc.around[e_east] = &grid[row][col+1].loc;
 		}
 	}
-
-	for(int row(1); row<rows-1; ++row)
-	{
-		grid[row][0].loc.around[e_north] = &grid[row-1][0].loc;
-		grid[row][0].loc.around[e_east] = &grid[row][1].loc;
-		grid[row][0].loc.around[e_south] = &grid[row+1][0].loc;
-		grid[row][0].loc.around[e_west] = &grid[row][cols-1].loc;
-
-		grid[row][cols-1].loc.around[e_north] = &grid[row-1][0].loc;
-		grid[row][cols-1].loc.around[e_east] = &grid[row][0].loc;
-		grid[row][cols-1].loc.around[e_south] = &grid[row+1][0].loc;
-		grid[row][cols-1].loc.around[e_west] = &grid[row][cols-2].loc;
-	}
-
-	for(int col(1); col<cols-1; ++col)
-	{
-		grid[0][col].loc.around[e_north] = &grid[rows-1][col].loc;
-		grid[0][col].loc.around[e_east] = &grid[0][col+1].loc;
-		grid[0][col].loc.around[e_south] = &grid[1][col].loc;
-		grid[0][col].loc.around[e_west] = &grid[0][col-1].loc;
-
-		grid[rows-1][col].loc.around[e_north] = &grid[rows-2][col].loc;
-		grid[rows-1][col].loc.around[e_east] = &grid[rows-1][col+1].loc;
-		grid[rows-1][col].loc.around[e_south] = &grid[0][col].loc;
-		grid[rows-1][col].loc.around[e_west] = &grid[rows-1][col-1].loc;
-	}
-
-	grid[0][0].loc.around[e_north] = &grid[rows-1][0].loc;
-	grid[0][0].loc.around[e_east] = &grid[0][1].loc;
-	grid[0][0].loc.around[e_south] = &grid[1][0].loc;
-	grid[0][0].loc.around[e_west] = &grid[0][cols-1].loc;
-
-	grid[rows-1][0].loc.around[e_north] = &grid[rows-2][0].loc;
-	grid[rows-1][0].loc.around[e_east] = &grid[rows-1][1].loc;
-	grid[rows-1][0].loc.around[e_south] = &grid[rows-1][0].loc;
-	grid[rows-1][0].loc.around[e_west] = &grid[rows-1][cols-1].loc;
-
-	grid[0][cols-1].loc.around[e_north] = &grid[rows-1][cols-1].loc;
-	grid[0][cols-1].loc.around[e_east] = &grid[0][cols-1].loc;
-	grid[0][cols-1].loc.around[e_south] = &grid[1][cols-1].loc;
-	grid[0][cols-1].loc.around[e_west] = &grid[0][cols-2].loc;
-
-	grid[rows-1][cols-1].loc.around[e_north] = &grid[rows-2][cols-1].loc;
-	grid[rows-1][cols-1].loc.around[e_east] = &grid[rows-1][0].loc;
-	grid[rows-1][cols-1].loc.around[e_south] = &grid[0][cols-1].loc;
-	grid[rows-1][cols-1].loc.around[e_west] = &grid[rows-1][cols-2].loc;
-
 };
 
 //resets all non-water squares to land and clears the bots ant vector
@@ -367,7 +335,7 @@ istream& operator>>(istream &is, State &state)
         is >> row >> col;
         state.grid[row][col].loc.isFood = 1;
         state.food.push_back(&state.grid[row][col].loc);
-        //costs_around(state, row, col, -20);
+        costs_around(state, row, col, -20);
       }
       else if(inputType == "a") //live ant square
       {
@@ -376,12 +344,12 @@ istream& operator>>(istream &is, State &state)
         if(player == 0)
         {
           state.myAnts.push_back(&state.grid[row][col].loc);
-          //costs_around(state, row, col, -2);
+          costs_around(state, row, col, -2);
         }
         else
         {
           state.enemyAnts.push_back(&state.grid[row][col].loc);
-          //costs_around(state, row, col, 20);
+          costs_around(state, row, col, 20);
         }
       }
       else if(inputType == "d") //dead ant square
@@ -390,7 +358,7 @@ istream& operator>>(istream &is, State &state)
         state.grid[row][col].loc.isDead = 1;
         state.grid[row][col].loc.isFood = 1;
         state.food.push_back(&state.grid[row][col].loc);
-        //costs_around(state, row, col, -5);
+        costs_around(state, row, col, -5);
       }
       else if(inputType == "h")
       {
@@ -400,12 +368,12 @@ istream& operator>>(istream &is, State &state)
         if(player == 0)
         {
           state.myHills.push_back(&state.grid[row][col].loc);
-          //costs_around(state, row, col, -5);
+          costs_around(state, row, col, -5);
         }
         else
         {
           state.enemyHills.push_back(&state.grid[row][col].loc);
-          //costs_around(state, row, col, -20);
+          costs_around(state, row, col, -20);
         }
       }
       else if(inputType == "players") //player information
