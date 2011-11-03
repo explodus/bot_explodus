@@ -445,7 +445,7 @@ void Bot::makeMoves()
 					<< " ";
 			}
 			ann_out 
-				<< 1.0/(static_cast<double>(static_cast<int>(itb->d))+ 0.01) 
+				<< 1.0/(static_cast<double>(static_cast<int>(itb->d)+1)+ 0.01) 
 				<< "\n";
 		}
 #endif // TRAIN_ANN
@@ -482,7 +482,7 @@ void Bot::makeMoves()
 			ann_out 
 				<< Network.getOutput(0)
 				<< " / "
-				<< 1.0/(static_cast<double>(static_cast<int>(itb->d)) + 0.01)
+				<< 1.0/(static_cast<double>(static_cast<int>(itb->d)+1) + 0.01)
 				<< "\n";
 		}
 #endif // TEST_ANN
