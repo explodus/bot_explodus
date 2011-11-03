@@ -13,11 +13,11 @@ int calc::Path::astar_break = 100;
 
 const int NUM_INPUTS = 72;
 const int NUM_OUTPUTS = 1;
-const int NUM_HIDDEN_LAYERS = 4;
+const int NUM_HIDDEN_LAYERS = 0;
 const int LAYER_SIZES[NUM_HIDDEN_LAYERS] = {32};
 const double HIGH_RANDOM_LIMIT = 0.1;
 const double LOW_RANDOM_LIMIT = -0.1;
-const double LEARNING_RATE = 0.2;
+const double LEARNING_RATE = 0.8;
 const double MOMENTUM_COEFFICIENT = 0.0; 
 
 double input[NUM_INPUTS];
