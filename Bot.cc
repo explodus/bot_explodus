@@ -369,6 +369,15 @@ void Bot::makeMoves()
 
   try
   {
+		for (t_moves::iterator 
+			  itb(state._moves.begin())
+			, ite(state._moves.end())
+			; itb != ite
+			; ++itb)
+		{
+			itb->from->ant = -1;
+		}
+
     state.endMoves();
   }
   catch (...)
@@ -527,35 +536,10 @@ Location * Bot::closest_ant( const Location &loc )
 {
   Location * l(0);
   
-  std::vector<Location*> suround;
-  suround.reserve(24);
+  t_location_vector suround;
+	fill_suround(suround, loc);
 
-  suround.push_back(state.getLocation(loc, e_north));
-  suround.push_back(state.getLocation(*suround.back(), e_east));
-  suround.push_back(state.getLocation(*suround.back(), e_south));
-  suround.push_back(state.getLocation(*suround.back(), e_south));
-  suround.push_back(state.getLocation(*suround.back(), e_west));
-  suround.push_back(state.getLocation(*suround.back(), e_west));
-  suround.push_back(state.getLocation(*suround.back(), e_north));
-  suround.push_back(state.getLocation(*suround.back(), e_north));
-  suround.push_back(state.getLocation(*suround.back(), e_north));
-  suround.push_back(state.getLocation(*suround.back(), e_east));
-  suround.push_back(state.getLocation(*suround.back(), e_east));
-  suround.push_back(state.getLocation(*suround.back(), e_east));
-  suround.push_back(state.getLocation(*suround.back(), e_south));
-  suround.push_back(state.getLocation(*suround.back(), e_south));
-  suround.push_back(state.getLocation(*suround.back(), e_south));
-  suround.push_back(state.getLocation(*suround.back(), e_south));
-  suround.push_back(state.getLocation(*suround.back(), e_west));
-  suround.push_back(state.getLocation(*suround.back(), e_west));
-  suround.push_back(state.getLocation(*suround.back(), e_west));
-  suround.push_back(state.getLocation(*suround.back(), e_west));
-  suround.push_back(state.getLocation(*suround.back(), e_north));
-  suround.push_back(state.getLocation(*suround.back(), e_north));
-  suround.push_back(state.getLocation(*suround.back(), e_north));
-  suround.push_back(state.getLocation(*suround.back(), e_north));
-
-  for (std::vector<Location*>::iterator 
+  for (t_location_vector::iterator 
       itb(suround.begin())
     , ite(suround.end())
     ; itb!=ite
@@ -574,4 +558,34 @@ Location * Bot::closest_ant( const Location &loc )
   }
 
   return l;
+}
+
+void Bot::fill_suround( t_location_vector &suround, const Location & loc )
+{
+	suround.reserve(24);
+
+	suround.push_back(state.getLocation(loc, e_north));
+	suround.push_back(state.getLocation(*suround.back(), e_east));
+	suround.push_back(state.getLocation(*suround.back(), e_south));
+	suround.push_back(state.getLocation(*suround.back(), e_south));
+	suround.push_back(state.getLocation(*suround.back(), e_west));
+	suround.push_back(state.getLocation(*suround.back(), e_west));
+	suround.push_back(state.getLocation(*suround.back(), e_north));
+	suround.push_back(state.getLocation(*suround.back(), e_north));
+	suround.push_back(state.getLocation(*suround.back(), e_north));
+	suround.push_back(state.getLocation(*suround.back(), e_east));
+	suround.push_back(state.getLocation(*suround.back(), e_east));
+	suround.push_back(state.getLocation(*suround.back(), e_east));
+	suround.push_back(state.getLocation(*suround.back(), e_south));
+	suround.push_back(state.getLocation(*suround.back(), e_south));
+	suround.push_back(state.getLocation(*suround.back(), e_south));
+	suround.push_back(state.getLocation(*suround.back(), e_south));
+	suround.push_back(state.getLocation(*suround.back(), e_west));
+	suround.push_back(state.getLocation(*suround.back(), e_west));
+	suround.push_back(state.getLocation(*suround.back(), e_west));
+	suround.push_back(state.getLocation(*suround.back(), e_west));
+	suround.push_back(state.getLocation(*suround.back(), e_north));
+	suround.push_back(state.getLocation(*suround.back(), e_north));
+	suround.push_back(state.getLocation(*suround.back(), e_north));
+	suround.push_back(state.getLocation(*suround.back(), e_north));
 }
