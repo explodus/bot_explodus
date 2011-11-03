@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-O3 -funroll-loops -c
 LDFLAGS=-O2 -lm
-SOURCES=Bot.cc MyBot.cc State.cc
+SOURCES=Bot.cc MyBot.cc State.cc scn/scnLayer.cc scn/scnNode.cc scn/scnANN.cc
 OBJECTS=$(SOURCES:.cc=.o)
 EXECUTABLE=MyBot
 

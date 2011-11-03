@@ -9,8 +9,8 @@
 
 //#define DEBUG
 #define ANN
-//#define TRAIN_ANN
-#define TEST_ANN
+#define TRAIN_ANN
+//#define TEST_ANN
 //#define USE_ANN
 
 /*

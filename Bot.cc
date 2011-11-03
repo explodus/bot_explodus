@@ -13,11 +13,11 @@ int calc::Path::astar_break = 100;
 
 const int NUM_INPUTS = 72;
 const int NUM_OUTPUTS = 1;
-const int NUM_HIDDEN_LAYERS = 0;
+const int NUM_HIDDEN_LAYERS = 1;
 const int LAYER_SIZES[NUM_HIDDEN_LAYERS] = {32};
 const double HIGH_RANDOM_LIMIT = 0.1;
 const double LOW_RANDOM_LIMIT = -0.1;
-const double LEARNING_RATE = 0.8;
+const double LEARNING_RATE = 0.5;
 const double MOMENTUM_COEFFICIENT = 0.0; 
 
 double input[NUM_INPUTS];
@@ -374,6 +374,36 @@ void Bot::makeMoves()
         Location *loc = state.getLocation(*ant_loc, d);
         if(loc && !loc->isWater && loc->ant != 0 && ant_loc->ant > -1)
         {
+#ifdef TRAIN_ANN
+					if (p && p->dest && p->dest->isFood || p->dest->hillPlayer>0)
+					{
+						t_location_vector suround;
+						fill_suround(suround, *ant_loc);
+			
+						for (t_location_vector::const_iterator 
+							  isb(suround.begin())
+							, ise(suround.end())
+							; isb != ise
+							; ++isb)
+						{
+							const Location * l = *isb;
+							ann_out 
+								<< 1.0/(static_cast<double>(l->weightcosts())-0.01)
+								<< " " 
+								<< 1.0/(static_cast<double>(static_cast<int>(l->isVisible) 
+								+  static_cast<int>(l->isWater)
+								+  static_cast<int>(l->isFood)
+								+  static_cast<int>(l->isDead)
+								+  static_cast<int>(l->isHill))-0.01)
+								<< " " 
+								<< 1.0/(static_cast<double>(l->hillPlayer)-0.01)
+								<< " ";
+						}
+						ann_out 
+							<< 1.0/(static_cast<double>(static_cast<int>(d)+1)-0.01)
+							<< "\n";
+					}
+#endif // TRAIN_ANN
       //    if (p->nodes.size() > 4 
 						//&& (!p->dest->isFood 
 						//&& !(p->dest->hillPlayer > 0)))
@@ -415,40 +445,40 @@ void Bot::makeMoves()
 
   try
   {
-#ifdef TRAIN_ANN
-		for (t_moves::iterator 
-			  itb(state._moves.begin())
-			, ite(state._moves.end())
-			; itb != ite
-			; ++itb)
-		{
-			t_location_vector suround;
-			fill_suround(suround, *itb->from);
-
-			for (t_location_vector::const_iterator 
-				  isb(suround.begin())
-				, ise(suround.end())
-				; isb != ise
-				; ++isb)
-			{
-				const Location * l = *isb;
-				ann_out 
-					<< 1.0/(static_cast<double>(l->weightcosts()) + 0.01)
-					<< " " 
-					<< 1.0/(static_cast<double>(static_cast<int>(l->isVisible) 
-					+  static_cast<int>(l->isWater)
-					+  static_cast<int>(l->isFood)
-					+  static_cast<int>(l->isDead)
-					+  static_cast<int>(l->isHill)) + 0.01)
-					<< " " 
-					<< 1.0/(static_cast<double>(l->hillPlayer) + 0.01)
-					<< " ";
-			}
-			ann_out 
-				<< 1.0/(static_cast<double>(static_cast<int>(itb->d)+1)+ 0.01) 
-				<< "\n";
-		}
-#endif // TRAIN_ANN
+//#ifdef TRAIN_ANN
+//		for (t_moves::iterator 
+//			  itb(state._moves.begin())
+//			, ite(state._moves.end())
+//			; itb != ite
+//			; ++itb)
+//		{
+//			t_location_vector suround;
+//			fill_suround(suround, *itb->from);
+//
+//			for (t_location_vector::const_iterator 
+//				  isb(suround.begin())
+//				, ise(suround.end())
+//				; isb != ise
+//				; ++isb)
+//			{
+//				const Location * l = *isb;
+//				ann_out 
+//					<< l->weightcosts()
+//					<< " " 
+//					<< static_cast<int>(l->isVisible) 
+//					+  static_cast<int>(l->isWater)
+//					+  static_cast<int>(l->isFood)
+//					+  static_cast<int>(l->isDead)
+//					+  static_cast<int>(l->isHill)
+//					<< " " 
+//					<< static_cast<double>(l->hillPlayer)
+//					<< " ";
+//			}
+//			ann_out 
+//				<< static_cast<int>(itb->d)+1
+//				<< "\n";
+//		}
+//#endif // TRAIN_ANN
 #ifdef TEST_ANN
 		for (t_moves::iterator 
 			  itb(state._moves.begin())
@@ -468,13 +498,13 @@ void Bot::makeMoves()
 				; ++isb)
 			{
 				const Location * l = *isb;
-				input[i++] = 1.0/(static_cast<double>(l->weightcosts()) + 0.01);
+				input[i++] = 1.0/(static_cast<double>(l->weightcosts())-0.01);
 				input[i++] = 1.0/(static_cast<double>(static_cast<int>(l->isVisible) 
 					+  static_cast<int>(l->isWater)
 					+  static_cast<int>(l->isFood)
 					+  static_cast<int>(l->isDead)
-					+  static_cast<int>(l->isHill)) + 0.01);
-				input[i++] = 1.0/(static_cast<double>(l->hillPlayer) + 0.01);
+					+  static_cast<int>(l->isHill))-0.01);
+				input[i++] = 1.0/(static_cast<double>(l->hillPlayer)-0.01);
 			}
 
 			Network.processInput(input);
