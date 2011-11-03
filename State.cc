@@ -73,16 +73,6 @@ void State::reset()
     for(int col=0; col<cols; ++col)
       if(!grid[row][col].loc.isWater)
         grid[row][col].reset();
-  //for(int col=0; col<cols; ++col)
-  //{
-  //  grid[0][col].loc.cost = 99;
-  //  grid[rows-1][col].loc.cost = 99;
-  //}
-  //for(int row=0; row<rows; ++row)
-  //{
-  //  grid[row][0].loc.cost = 99;
-  //  grid[row][cols-1].loc.cost = 99;
-  //}
 };
 
 //outputs move information to the engine
@@ -123,7 +113,8 @@ void State::endMoves()
       << " " 
       << CDIRECTIONS[itb->d] 
     << endl;
-		bug << "make move real from " << *itb->from << " to " << *itb->to << endl;;
+		bug << "make move real from " << *itb->from << " to " << *itb->to << endl;
+		++itb->from->cost;
   }
   _moves.clear();
 }
@@ -337,7 +328,7 @@ istream& operator>>(istream &is, State &state)
       {
         is >> row >> col;
         state.grid[row][col].loc.isWater = 1;
-        state.grid[row][col].loc.cost = 99;
+        state.grid[row][col].loc.weight = 99;
       }
       else if(inputType == "f") //food square
       {

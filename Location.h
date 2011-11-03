@@ -38,7 +38,7 @@ struct Location
     : row(0)
     , col(0)
     , isWater(0)
-    , cost(10)
+    , cost(1)
     , weight(10)
 		, prev(0)
 		, around(4)
@@ -50,7 +50,7 @@ struct Location
     : row(r)
     , col(c)
     , isWater(0)
-    , cost(10)
+    , cost(1)
     , weight(10) 
 		, prev(0)
 		, around(4)
@@ -81,8 +81,8 @@ struct Location
   {
     isVisible = isHill = isFood = isDead = 0;
     ant = hillPlayer = -1;
-		cost = 10;
-    weight = isWater? 999: 10;
+		cost = 1;
+    weight = isWater? 99: 10;
 		prev = 0;
   }
 

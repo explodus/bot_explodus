@@ -104,7 +104,7 @@ bool calc::Path::astar( State &state )
 		  { // expand vertex
 			  Location *loc(state.getLocation(*v, static_cast<TDIRECTIONS>(d)));
 
-        if (loc->isWater || loc->ant != -1/* || !loc->isVisible*/)
+        if (loc->isWater || loc->ant != -1 || !loc->isVisible)
         {
           clist.push_back(v);
           continue;
@@ -118,9 +118,7 @@ bool calc::Path::astar( State &state )
 				  continue;
 
 			  Location *successor(loc);
-
-        long long new_weight = 
-          v->weight + (v->cost + successor->cost); 
+        long long new_weight(v->weightcosts() + successor->weightcosts());
 
 			  t_location_deque::iterator vd(std::find_if(
             olist.begin()
@@ -130,7 +128,7 @@ bool calc::Path::astar( State &state )
 				  continue;
 
 				successor->prev = v;
-			  successor->cost = new_weight;
+			  successor->weight += new_weight;
 
 			  if (vd != olist.end())
 				  vd = olist.erase(vd);
@@ -307,22 +305,22 @@ void Bot::makeMoves()
 					}
 					else
 					{
-						calc::Path::astar_break = 100;
-						if (ant_count > 30)
-							ptmp_hill = calc::Path(
-							  ant_loc
-							, closest_hill(*ant_loc)
-							, state);
-						calc::Path::astar_break = 96;
+						//calc::Path::astar_break = 100;
+						//if (ant_count > 30)
+						//	ptmp_hill = calc::Path(
+						//	  ant_loc
+						//	, closest_hill(*ant_loc)
+						//	, state);
+						calc::Path::astar_break = 128;
 						ptmp_food = calc::Path(
 							  ant_loc
 							, closest_food(*ant_loc)
 							, state);
-						calc::Path::astar_break = 24;
-						ptmp_enemy = calc::Path(
-							  ant_loc
-							, closest_enemy(*ant_loc)
-							, state);
+						//calc::Path::astar_break = 24;
+						//ptmp_enemy = calc::Path(
+						//	  ant_loc
+						//	, closest_enemy(*ant_loc)
+						//	, state);
 						calc::Path::astar_break = 12;
 						ptmp_center = calc::Path(
 							  ant_loc
