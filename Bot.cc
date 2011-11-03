@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <functional>
+#include <ios>
 
 #include "scn/scnANN.h"
 
@@ -10,7 +11,7 @@ using namespace std;
 
 int calc::Path::astar_break = 100;
 
-const int NUM_INPUTS = 48;
+const int NUM_INPUTS = 72;
 const int NUM_OUTPUTS = 1;
 const int NUM_HIDDEN_LAYERS = 4;
 const int LAYER_SIZES[NUM_HIDDEN_LAYERS] = {32};
@@ -53,6 +54,19 @@ namespace
     bool operator()(const Type *x, const Type *y) const
     { return Compare()(*x, *y); }
   };
+
+	bool readOnePair(istream& in, double* input, double* idealOutput)
+	{
+		bool retVal = !in.eof();
+		if(retVal)
+		{
+			for(int j = 0; j < NUM_INPUTS; j++)
+				in >> input[j];
+			for(int j = 0; j < NUM_OUTPUTS; j++)
+				in >> idealOutput[j];
+		}
+		return retVal;
+	} 
 }
 
 bool calc::Path::astar( State &state )
@@ -78,7 +92,8 @@ bool calc::Path::astar( State &state )
 
 		  Location *v = olist.front();
 
-			if (*v == *dest || olist.size() > static_cast<t_location_deque::size_type>(astar_break))
+			if (*v == *dest 
+				|| olist.size() > static_cast<t_location_deque::size_type>(astar_break))
 			  break;
 
       olist.pop_front();
@@ -159,8 +174,15 @@ bool calc::Path::astar( State &state )
 //constructor
 Bot::Bot()
 {
-	ann_out.open("debug.txt");
-};
+	ann_out.open("ann.txt");
+
+#ifdef TEST_ANN
+	std::ifstream fin_train("train.txt");
+	for (long long i(0); readOnePair(fin_train, input, idealOutput); ++i)
+		Network.trainNetwork(input, idealOutput);
+	fin_train.close(); 
+#endif // TEST_ANN
+}
 
 //plays a single game of Ants.
 void Bot::playGame()
@@ -177,7 +199,7 @@ void Bot::playGame()
     makeMoves();
     endTurn();
   }
-};
+}
 
 //makes the bots moves for the turn
 void Bot::makeMoves()
@@ -393,15 +415,77 @@ void Bot::makeMoves()
 
   try
   {
+#ifdef TRAIN_ANN
 		for (t_moves::iterator 
 			  itb(state._moves.begin())
 			, ite(state._moves.end())
 			; itb != ite
 			; ++itb)
 		{
-			itb->from->ant = -1;
-		}
+			t_location_vector suround;
+			fill_suround(suround, *itb->from);
 
+			for (t_location_vector::const_iterator 
+				  isb(suround.begin())
+				, ise(suround.end())
+				; isb != ise
+				; ++isb)
+			{
+				const Location * l = *isb;
+				ann_out 
+					<< 1.0/(static_cast<double>(l->weightcosts()) + 0.01)
+					<< " " 
+					<< 1.0/(static_cast<double>(static_cast<int>(l->isVisible) 
+					+  static_cast<int>(l->isWater)
+					+  static_cast<int>(l->isFood)
+					+  static_cast<int>(l->isDead)
+					+  static_cast<int>(l->isHill)) + 0.01)
+					<< " " 
+					<< 1.0/(static_cast<double>(l->hillPlayer) + 0.01)
+					<< " ";
+			}
+			ann_out 
+				<< 1.0/(static_cast<double>(static_cast<int>(itb->d))+ 0.01) 
+				<< "\n";
+		}
+#endif // TRAIN_ANN
+#ifdef TEST_ANN
+		for (t_moves::iterator 
+			  itb(state._moves.begin())
+			, ite(state._moves.end())
+			; itb != ite
+			; ++itb)
+		{
+			t_location_vector suround;
+			fill_suround(suround, *itb->from);
+
+			double input[NUM_INPUTS];
+			int i(0);
+			for (t_location_vector::const_iterator 
+				  isb(suround.begin())
+				, ise(suround.end())
+				; isb != ise
+				; ++isb)
+			{
+				const Location * l = *isb;
+				input[i++] = 1.0/(static_cast<double>(l->weightcosts()) + 0.01);
+				input[i++] = 1.0/(static_cast<double>(static_cast<int>(l->isVisible) 
+					+  static_cast<int>(l->isWater)
+					+  static_cast<int>(l->isFood)
+					+  static_cast<int>(l->isDead)
+					+  static_cast<int>(l->isHill)) + 0.01);
+				input[i++] = 1.0/(static_cast<double>(l->hillPlayer) + 0.01);
+			}
+
+			Network.processInput(input);
+
+			ann_out 
+				<< Network.getOutput(0)
+				<< " / "
+				<< 1.0/(static_cast<double>(static_cast<int>(itb->d)) + 0.01)
+				<< "\n";
+		}
+#endif // TEST_ANN
     state.endMoves();
   }
   catch (...)
@@ -420,7 +504,7 @@ void Bot::endTurn()
   state.turn++;
 
   cout << "go" << endl;
-};
+}
 
 namespace 
 {
@@ -582,34 +666,4 @@ Location * Bot::closest_ant( const Location &loc )
   }
 
   return l;
-}
-
-void Bot::fill_suround( t_location_vector &suround, const Location & loc )
-{
-	suround.reserve(24);
-
-	suround.push_back(state.getLocation(loc, e_north));
-	suround.push_back(state.getLocation(*suround.back(), e_east));
-	suround.push_back(state.getLocation(*suround.back(), e_south));
-	suround.push_back(state.getLocation(*suround.back(), e_south));
-	suround.push_back(state.getLocation(*suround.back(), e_west));
-	suround.push_back(state.getLocation(*suround.back(), e_west));
-	suround.push_back(state.getLocation(*suround.back(), e_north));
-	suround.push_back(state.getLocation(*suround.back(), e_north));
-	suround.push_back(state.getLocation(*suround.back(), e_north));
-	suround.push_back(state.getLocation(*suround.back(), e_east));
-	suround.push_back(state.getLocation(*suround.back(), e_east));
-	suround.push_back(state.getLocation(*suround.back(), e_east));
-	suround.push_back(state.getLocation(*suround.back(), e_south));
-	suround.push_back(state.getLocation(*suround.back(), e_south));
-	suround.push_back(state.getLocation(*suround.back(), e_south));
-	suround.push_back(state.getLocation(*suround.back(), e_south));
-	suround.push_back(state.getLocation(*suround.back(), e_west));
-	suround.push_back(state.getLocation(*suround.back(), e_west));
-	suround.push_back(state.getLocation(*suround.back(), e_west));
-	suround.push_back(state.getLocation(*suround.back(), e_west));
-	suround.push_back(state.getLocation(*suround.back(), e_north));
-	suround.push_back(state.getLocation(*suround.back(), e_north));
-	suround.push_back(state.getLocation(*suround.back(), e_north));
-	suround.push_back(state.getLocation(*suround.back(), e_north));
 }

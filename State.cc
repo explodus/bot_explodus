@@ -101,9 +101,18 @@ void State::makeMoves(Location &loc, Location &dest, TDIRECTIONS direction)
 
 void State::endMoves()
 {
-  for (t_moves::iterator itb(_moves.begin()), ite(_moves.end()); itb!=ite; ++itb)
+  for (t_moves::iterator 
+		  itb(_moves.begin())
+		, ite(_moves.end())
+		; itb != ite
+		; ++itb)
     itb->from->ant = -1;
-  for (t_moves::iterator itb(_moves.begin()), ite(_moves.end()); itb!=ite; ++itb)
+
+  for (t_moves::iterator 
+		  itb(_moves.begin())
+		, ite(_moves.end())
+		; itb != ite
+		; ++itb)
   {
     itb->to->ant = itb->ant;
     cout 
@@ -113,7 +122,7 @@ void State::endMoves()
       << itb->from->col 
       << " " 
       << CDIRECTIONS[itb->d] 
-    << endl;;
+    << endl;
 		bug << "make move real from " << *itb->from << " to " << *itb->to << endl;;
   }
   _moves.clear();

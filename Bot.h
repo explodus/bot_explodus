@@ -146,6 +146,36 @@ struct Bot
   Location * closest_enemy(const Location &loc);
   Location * closest_ant(const Location &loc);
 
+	inline void fill_suround( t_location_vector &suround, const Location & loc )
+	{
+		suround.reserve(24);
+
+		suround.push_back(state.getLocation(loc, e_north));
+		suround.push_back(state.getLocation(*suround.back(), e_east));
+		suround.push_back(state.getLocation(*suround.back(), e_south));
+		suround.push_back(state.getLocation(*suround.back(), e_south));
+		suround.push_back(state.getLocation(*suround.back(), e_west));
+		suround.push_back(state.getLocation(*suround.back(), e_west));
+		suround.push_back(state.getLocation(*suround.back(), e_north));
+		suround.push_back(state.getLocation(*suround.back(), e_north));
+		suround.push_back(state.getLocation(*suround.back(), e_north));
+		suround.push_back(state.getLocation(*suround.back(), e_east));
+		suround.push_back(state.getLocation(*suround.back(), e_east));
+		suround.push_back(state.getLocation(*suround.back(), e_east));
+		suround.push_back(state.getLocation(*suround.back(), e_south));
+		suround.push_back(state.getLocation(*suround.back(), e_south));
+		suround.push_back(state.getLocation(*suround.back(), e_south));
+		suround.push_back(state.getLocation(*suround.back(), e_south));
+		suround.push_back(state.getLocation(*suround.back(), e_west));
+		suround.push_back(state.getLocation(*suround.back(), e_west));
+		suround.push_back(state.getLocation(*suround.back(), e_west));
+		suround.push_back(state.getLocation(*suround.back(), e_west));
+		suround.push_back(state.getLocation(*suround.back(), e_north));
+		suround.push_back(state.getLocation(*suround.back(), e_north));
+		suround.push_back(state.getLocation(*suround.back(), e_north));
+		suround.push_back(state.getLocation(*suround.back(), e_north));
+	}
+
 };
 
 #endif //BOT_H_
