@@ -4,9 +4,33 @@
 #include <vector>
 #include <functional>
 
+#include "scn/scnANN.h"
+
 using namespace std;
 
 int calc::Path::astar_break = 100;
+
+const int NUM_INPUTS = 48;
+const int NUM_OUTPUTS = 1;
+const int NUM_HIDDEN_LAYERS = 4;
+const int LAYER_SIZES[NUM_HIDDEN_LAYERS] = {32};
+const double HIGH_RANDOM_LIMIT = 0.1;
+const double LOW_RANDOM_LIMIT = -0.1;
+const double LEARNING_RATE = 0.2;
+const double MOMENTUM_COEFFICIENT = 0.0; 
+
+double input[NUM_INPUTS];
+double idealOutput[NUM_OUTPUTS]; 
+
+scnANN Network(
+	  NUM_INPUTS
+	, NUM_OUTPUTS
+	, NUM_HIDDEN_LAYERS
+	, LAYER_SIZES
+	, HIGH_RANDOM_LIMIT
+	, LOW_RANDOM_LIMIT
+	, LEARNING_RATE
+	, MOMENTUM_COEFFICIENT);
 
 namespace 
 {
@@ -135,7 +159,7 @@ bool calc::Path::astar( State &state )
 //constructor
 Bot::Bot()
 {
-
+	ann_out.open("debug.txt");
 };
 
 //plays a single game of Ants.
@@ -203,19 +227,19 @@ void Bot::makeMoves()
 				{
 					calc::Path ptmp_food, ptmp_hill, ptmp_enemy, ptmp_center;
 
-					if (ant_count > 80 && ant_count > state.enemyAnts.size()*1.2 )
+					if (ant_count > 100)
 					{ // only attacking
 						if (state.enemyHills.size())
 						{
-							calc::Path::astar_break = 96;
+							calc::Path::astar_break = 72;
 							ptmp_hill = calc::Path(
 								  ant_loc
 								, state.enemyHills[0]
 								, state);
 						}
-						else
+						if (!ptmp_hill.dest)
 						{
-							calc::Path::astar_break = 48;
+							calc::Path::astar_break = 12;
 							ptmp_enemy = calc::Path(
 								  ant_loc
 								, closest_enemy(*ant_loc)
@@ -236,7 +260,7 @@ void Bot::makeMoves()
 								, state);
 						}
 					}
-					else if (ant_count > 80)
+					else if (ant_count > 50)
 					{
 						calc::Path::astar_break = 72;
 						ptmp_hill = calc::Path(
