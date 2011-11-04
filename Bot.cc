@@ -78,6 +78,15 @@ namespace
 		}
 		return retVal;
 	} 
+
+	inline bool sort_food(const Location * lhs, const Location * rhs)
+	{ return lhs->dist_food < rhs->dist_food; }
+	inline bool sort_hill(const Location * lhs, const Location * rhs)
+	{ return lhs->dist_hill < rhs->dist_hill; }
+	inline bool sort_enemy(const Location * lhs, const Location * rhs)
+	{ return lhs->dist_enemy < rhs->dist_enemy; }
+	inline bool sort_ant(const Location * lhs, const Location * rhs)
+	{ return lhs->dist_ant < rhs->dist_ant; }
 }
 
 bool calc::Path::astar( State &state )
@@ -247,6 +256,38 @@ void Bot::makeMoves()
 
 		if (state.timer.getTime() < 450 && food_count)
 		{
+			{ // sort food
+				Location & top_left = state.grid[0][0].loc;
+				double min_dist=std::numeric_limits<double>::max(), dist(min_dist);
+				for (t_location_vector::iterator 
+						itb(state.food.begin())
+					, ite(state.food.end())
+					; itb!=ite
+					; ++itb)
+					(*itb)->dist_food = state.distance(top_left, **itb);
+				sort(state.food.begin(), state.food.end(), sort_food);
+
+				min_dist=std::numeric_limits<double>::max(); 
+				dist = min_dist;
+				for (t_location_vector::iterator 
+					  itb(state.myAnts.begin())
+					, ite(state.myAnts.end())
+					; itb!=ite
+					; ++itb)
+					(*itb)->dist_enemy = state.distance(top_left, **itb);
+
+				sort(state.myAnts.begin(), state.myAnts.end(), sort_enemy);
+				min_dist=std::numeric_limits<double>::max(); 
+				dist = min_dist;
+				for (t_location_vector::iterator 
+					  itb(state.enemyAnts.begin())
+					, ite(state.enemyAnts.end())
+					; itb!=ite
+					; ++itb)
+					(*itb)->dist_enemy = state.distance(top_left, **itb);
+				sort(state.enemyAnts.begin(), state.enemyAnts.end(), sort_enemy);
+			}
+
 			for (t_location_vector::iterator 
 				  itb(state.food.begin())
 				, ite(state.food.end())
@@ -784,18 +825,6 @@ void Bot::endTurn()
   state.turn++;
 
   cout << "go" << endl;
-}
-
-namespace 
-{
-  bool sort_food(const Location * lhs, const Location * rhs)
-  { return lhs->dist_food < rhs->dist_food; }
-  bool sort_hill(const Location * lhs, const Location * rhs)
-  { return lhs->dist_hill < rhs->dist_hill; }
-  bool sort_enemy(const Location * lhs, const Location * rhs)
-  { return lhs->dist_enemy < rhs->dist_enemy; }
-  bool sort_ant(const Location * lhs, const Location * rhs)
-  { return lhs->dist_ant < rhs->dist_ant; }
 }
 
 Location * Bot::closest_food( const Location &loc )
