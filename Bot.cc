@@ -257,7 +257,7 @@ void Bot::makeMoves()
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
-				calc::Path::astar_break = 128;
+				calc::Path::astar_break = 48;
 				int result = makeMoves(*itb, o);
 				if (result < 0)
 					break;
@@ -278,9 +278,10 @@ void Bot::makeMoves()
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
-				calc::Path::astar_break = 96;
-				int result = makeMoves(*itb, o);
-				if (result < 0)
+				calc::Path::astar_break = 64;
+				if (makeMoves(*itb, o) < 0)
+					break;
+				if (makeMoves(*itb, o) < 0)
 					break;
 			}
 		}
@@ -322,8 +323,13 @@ void Bot::makeMoves()
 				if (!preMakeMoves(o, *itb))
 					continue;
 				calc::Path::astar_break = 12;
-				int result = makeMoves(*itb, o);
-				if (result < 0)
+				if (makeMoves(*itb, o) < 0)
+					break;
+				if (makeMoves(*itb, o) < 0)
+					break;
+				if (makeMoves(*itb, o) < 0)
+					break;
+				if (makeMoves(*itb, o) < 0)
 					break;
 			}
 		}
