@@ -260,9 +260,9 @@ void Bot::makeMoves()
 			}
 		}
 
-		if (state.timer.getTime() < 450 
-			&& state.enemyHills.size() 
-			&& ant_count > 25)
+		state.bug << "after food search ant_count " << state.myAnts.size() << endl;
+
+		if (ant_count > 25)
 		{
 			for (t_location_vector::iterator 
 				  itb(state.enemyHills.begin())
@@ -279,6 +279,8 @@ void Bot::makeMoves()
 					break;
 			}
 		}
+		
+		state.bug << "after hill search ant_count " << state.myAnts.size() << endl;
 
 		for (calc::t_order::iterator 
 			  itb(orders.begin())
@@ -288,8 +290,6 @@ void Bot::makeMoves()
 		{
 			if (state.timer.getTime() > 450)
 				break;
-			postMakeMoves(*itb, itb->start);
-
 			t_location_vector::iterator l(std::find_if(
 				  state.myAnts.begin()
 				, state.myAnts.end()
@@ -297,6 +297,27 @@ void Bot::makeMoves()
 			if (l != state.myAnts.end())
 				state.myAnts.erase(l);
 
+			postMakeMoves(*itb, itb->start);
+		}
+
+		state.bug << "path moves ant_count " << state.myAnts.size() << endl;
+
+		if (ant_count > 50)
+		{
+			for (t_location_vector::iterator 
+				  itb(state.enemyAnts.begin())
+				, ite(state.enemyAnts.end())
+				; itb != ite
+				; ++itb)
+			{
+				if (state.timer.getTime() > 450)
+					break;
+				if (!preMakeMoves(o, *itb))
+					continue;
+				int result = makeMoves(*itb, o);
+				if (result < 0)
+					break;
+			}
 		}
 
 		for (t_location_vector::iterator 
