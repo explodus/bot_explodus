@@ -31,11 +31,16 @@ namespace calc
 
     static int astar_break;
 
+		bool searchFood, searchHill, searchUnseen;
+
     Path() 
       : start( 0 )
       , dest( 0 )
       , cost(std::numeric_limits<unsigned int>::max())
 			, turn_counter(0)
+			, searchFood(false)
+			, searchHill(false)
+			, searchUnseen(false)
     {}
 
     Path( 
@@ -46,11 +51,25 @@ namespace calc
       , dest( d )
       , cost(std::numeric_limits<unsigned int>::max())
 			, turn_counter(0)
+			, searchFood(false)
+			, searchHill(false)
+			, searchUnseen(false)
     {
 			state.bug << "before astar" << std::endl;
 
       if (start && dest && astar(state))
       {
+				searchUnseen = false;
+				if (dest->isFood)
+					searchFood = true;
+				else if(!dest->isFood)
+					searchFood = false;
+				else if (dest->isHill)
+					searchHill = true;
+				else if(!dest->isHill)
+					searchHill = false;
+				else
+					searchUnseen = true;
         cost = 0;
         for (t_location_deque::const_iterator 
             itb(nodes.begin())
@@ -69,6 +88,9 @@ namespace calc
       , cost(p.cost)
 			, turn_counter(p.turn_counter)
 			, nodes(p.nodes)
+			, searchFood(p.searchFood)
+			, searchHill(p.searchHill)
+			, searchUnseen(p.searchUnseen)
     {
     }
 
@@ -79,6 +101,9 @@ namespace calc
       cost = p.cost;
 			turn_counter = p.turn_counter;
 			nodes = p.nodes;
+			searchFood = p.searchFood;
+			searchHill = p.searchHill;
+			searchUnseen = p.searchUnseen;
       return *this;
     }
 

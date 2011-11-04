@@ -29,6 +29,7 @@ struct Location
 
   long long cost;
   long long weight;
+	long long pheromone;
 
 	Location *prev;
 
@@ -40,6 +41,7 @@ struct Location
     , isWater(0)
     , cost(1)
     , weight(10)
+		, pheromone(1)
 		, prev(0)
 		, around(4)
   {
@@ -52,6 +54,7 @@ struct Location
     , isWater(0)
     , cost(1)
     , weight(10) 
+		, pheromone(1)
 		, prev(0)
 		, around(4)
   {
@@ -72,6 +75,7 @@ struct Location
     , dist_hill(l.dist_hill)
     , cost(l.cost)
     , weight(l.weight) 
+		, pheromone(l.pheromone)
 		, prev(l.prev)
 		, around(l.around)
   {
@@ -82,7 +86,7 @@ struct Location
     isVisible = isHill = isFood = isDead = 0;
     ant = hillPlayer = -1;
 		cost = 1;
-    weight = isWater ? 9999 : 10;
+    weight = isWater ? 999 : 10;
 		prev = 0;
   }
 
@@ -104,13 +108,14 @@ struct Location
     isWater = l.isWater;
     cost = l.cost;
     weight = l.weight;
+		pheromone = l.pheromone;
 		prev = l.prev;
 		around = l.around;
     return *this;
   }
 
   inline long long weightcosts() const
-  { return cost+weight; }
+  { return cost+weight+pheromone; }
 
 	inline bool operator==( const Location &l ) const 
 	{ return (row == l.row && col == l.col); }

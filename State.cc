@@ -328,7 +328,7 @@ istream& operator>>(istream &is, State &state)
       {
         is >> row >> col;
         state.grid[row][col].loc.isWater = 1;
-        state.grid[row][col].loc.weight = 9999;
+        state.grid[row][col].loc.weight = 999;
       }
       else if(inputType == "f") //food square
       {

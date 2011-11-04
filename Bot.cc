@@ -264,7 +264,7 @@ void Bot::makeMoves()
 
 		state.bug << "after food search ant_count " << state.myAnts.size() << endl;
 
-		if (ant_count > 25)
+		//if (ant_count > 25)
 		{
 			for (t_location_vector::iterator 
 				  itb(state.enemyHills.begin())
@@ -301,7 +301,10 @@ void Bot::makeMoves()
 				state.myAnts.erase(l);
 
 			postMakeMoves(*itb, itb->start);
-			if (itb->turn_counter == 0)
+			if (
+				   itb->turn_counter == 0 
+				|| (itb->searchFood && !itb->dest->isFood)
+				|| (itb->searchHill && !itb->dest->isHill))
 			{
 				orders.erase(itb);
 				itb = orders.begin();
@@ -311,7 +314,7 @@ void Bot::makeMoves()
 
 		state.bug << "path moves ant_count " << state.myAnts.size() << endl;
 
-		if (ant_count > 100)
+		//if (ant_count > 100)
 		{
 			for (t_location_vector::iterator 
 				  itb(state.enemyAnts.begin())
@@ -342,7 +345,7 @@ void Bot::makeMoves()
 			Location * ant = *itb;
 			Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
 
-			calc::Path::astar_break = 24;
+			calc::Path::astar_break = 12;
 			calc::Path p(ant, loc, state);
 
 			if (!p.nodes.size())
