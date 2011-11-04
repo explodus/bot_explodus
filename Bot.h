@@ -139,12 +139,18 @@ struct Bot
   void playGame();    //plays a single game of Ants
 
   void makeMoves();   //makes moves for a single turn
-  void endTurn();     //indicates to the engine that it has made its moves
+
+	int makeMoves(Location* loc, calc::t_order::iterator& o);
+	bool preMakeMoves(calc::t_order::iterator &o, Location * loc);
+	void postMakeMoves(calc::Path & p, Location * ant);
+
+	void endTurn();     //indicates to the engine that it has made its moves
 
   Location * closest_food(const Location &loc);
   Location * closest_hill(const Location &loc);
   Location * closest_enemy(const Location &loc);
-  Location * closest_ant(const Location &loc);
+	Location * closest_ant(const Location &loc);
+	Location * closest_ant_for_reverse(const Location &loc);
 
 	inline void fill_suround( t_location_vector &suround, const Location & loc )
 	{

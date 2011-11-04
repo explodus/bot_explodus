@@ -37,15 +37,26 @@ namespace
 {
   class find_by_loc
   {
-    const Location * loc;
+    const Location * _loc;
+		bool _destination;
   public:
-    find_by_loc(const Location * l) : loc(l) {}
+    find_by_loc(
+			  const Location * l
+			, bool destination = false) 
+			: _loc(l)
+			, _destination(destination)
+		{}
     inline bool operator()(const calc::Path& t_) const
-    { return t_==loc && t_.turn_counter == 0; }
+    { 
+			if (_destination && t_.dest)
+				return t_.dest==_loc; 
+			else
+				return t_.start==_loc && t_.turn_counter == 0; 
+		}
 		inline bool operator()(const Location& t_) const
-		{ return t_==*loc; }
+		{ return t_==*_loc; }
 		inline bool operator()(const Location* t_) const
-		{ return *t_==*loc; }
+		{ return *t_==*_loc; }
   };
 
   template<typename Type, typename Compare = std::less<Type> >
@@ -104,7 +115,7 @@ bool calc::Path::astar( State &state )
 		  { // expand vertex
 			  Location *loc(state.getLocation(*v, static_cast<TDIRECTIONS>(d)));
 
-        if (loc->isWater || loc->ant != -1 || !loc->isVisible)
+        if (loc->isWater || loc->ant != -1 /*|| !loc->isVisible*/)
         {
           clist.push_back(v);
           continue;
@@ -205,17 +216,130 @@ void Bot::makeMoves()
   state.bug << "turn " << state.turn << ":" << endl;
   //state.bug << state << endl;
 
-	if (state.turn > 998)
-		return;
-
-	state.bug << "turn " << state.turn << ":" << endl;
-
   int d(0);
 
   try
   {
-		state.bug << "ant_count " << state.myAnts.size() << endl;;
+		t_location_vector::size_type 
+			  ant_count(state.myAnts.size())
+			, food_count(state.food.size())
+			, hill_count(state.enemyHills.size());
+		state.bug << "ant_count " << ant_count << endl;
+		state.bug << "food_count " << food_count << endl;
+		state.bug << "hill_count " << hill_count << endl;
 
+	if (ant_count == 0)
+		return;
+
+#define REVERSE_SEARCH
+		calc::t_order::iterator o;
+		t_location_vector::iterator l;
+
+		for (calc::t_order::iterator 
+			  itb(orders.begin())
+			, ite(orders.end())
+			; itb != ite
+			; ++itb)
+			itb->turn_counter = 0;
+
+		if (state.timer.getTime() < 450 && food_count)
+		{
+			for (t_location_vector::iterator 
+				  itb(state.food.begin())
+				, ite(state.food.end())
+				; itb!=ite
+				; ++itb)
+			{
+				if (state.timer.getTime() > 450)
+					break;
+				if (!preMakeMoves(o, *itb))
+					continue;
+				int result = makeMoves(*itb, o);
+				if (result < 0)
+					break;
+			}
+		}
+
+		if (state.timer.getTime() < 450 
+			&& state.enemyHills.size() 
+			&& ant_count > 25)
+		{
+			for (t_location_vector::iterator 
+				  itb(state.enemyHills.begin())
+				, ite(state.enemyHills.end())
+				; itb!=ite
+				; ++itb)
+			{
+				if (state.timer.getTime() > 450)
+					break;
+				if (!preMakeMoves(o, *itb))
+					continue;
+				int result = makeMoves(*itb, o);
+				if (result < 0)
+					break;
+			}
+		}
+
+		for (calc::t_order::iterator 
+			  itb(orders.begin())
+			, ite(orders.end())
+			; itb != ite
+			; ++itb)
+		{
+			if (state.timer.getTime() > 450)
+				break;
+			postMakeMoves(*itb, itb->start);
+
+			t_location_vector::iterator l(std::find_if(
+				  state.myAnts.begin()
+				, state.myAnts.end()
+				, find_by_loc(itb->start)));
+			if (l != state.myAnts.end())
+				state.myAnts.erase(l);
+
+		}
+
+		for (t_location_vector::iterator 
+			  itb(state.myAnts.begin())
+			, ite(state.myAnts.end())
+			; itb != ite
+			; ++itb)
+		{
+			if (state.timer.getTime() > 450)
+				break;
+
+			Location * ant = *itb;
+			Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
+
+			calc::Path::astar_break = 12;
+			calc::Path p(ant, loc, state);
+
+			if (!p.nodes.size())
+				continue;
+
+			orders.push_back(p); 
+			calc::t_order::iterator o = orders.end()-1;	 
+
+			postMakeMoves(*o, ant);
+		}
+
+		calc::t_order::iterator itb(orders.begin());
+		while(itb != orders.end())
+		{
+			if (state.timer.getTime() > 450)
+				break;
+
+			if (itb->nodes.size()==0)
+			{
+				itb = orders.erase(itb);
+				itb = orders.begin();
+			}
+			else
+				++itb;
+		}
+
+#ifdef REVERSE_SEARCH
+#else
     //picks out moves for each ant
     for(std::vector<Location*>::size_type 
         ant(0), ant_count(state.myAnts.size())
@@ -435,6 +559,7 @@ void Bot::makeMoves()
 		  else if (o != orders.end())
 			  orders.erase(o);
     }
+#endif // REVERSE_SEARCH
   }
   catch (...)
   {
@@ -523,6 +648,84 @@ void Bot::makeMoves()
   
   state.bug << "time taken: " << state.timer.getTime() << "ms" << endl << endl;
 };
+
+void Bot::postMakeMoves( calc::Path & p, Location * ant )
+{
+	if (p.nodes.size()==0 || p.turn_counter > 0)
+		return;
+
+	int d(e_north);
+
+	Location *v(p.nodes.front());
+
+	d = state.get_direction(*ant, *v);
+
+	state.bug 
+		<< "akt move " 
+		<< *v 
+		<< " ant_loc " 
+		<< *ant << " direction " << d << endl;
+
+	d = state.get_direction(*ant, *v);
+	Location *loc = state.getLocation(*ant, d);
+	if(loc && !loc->isWater && loc->ant != 0 && ant->ant > -1)
+	{
+		p.nodes.pop_front();
+		state.makeMoves(*ant, *loc, static_cast<TDIRECTIONS>(d));
+		p.start = loc;
+		++p.turn_counter;
+	}
+}
+
+int Bot::makeMoves(Location* loc, calc::t_order::iterator& o)
+{
+	if (!loc)
+		return -1;
+	Location *ant(closest_ant_for_reverse(*loc));
+	if (!ant)
+		return -1;
+	{
+		calc::Path::astar_break = 48;
+		calc::Path p(ant, loc, state);
+
+		if (!p.nodes.size())
+			return 0;
+
+		orders.push_back(p); 
+		o = orders.end()-1;	 
+
+		t_location_vector::iterator l(std::find_if(
+			  state.myAnts.begin()
+			, state.myAnts.end()
+			, find_by_loc(o->start)));
+		if (l != state.myAnts.end())
+			state.myAnts.erase(l);
+	}
+
+	if (o->nodes.size() && o->start == ant)
+		postMakeMoves(*o, ant);
+
+	return 1;
+}
+
+bool Bot::preMakeMoves(calc::t_order::iterator &o, Location * loc)
+{
+	o = std::find_if(
+		  orders.begin()
+		, orders.end()
+		, find_by_loc(loc, true));
+	if (o != orders.end())
+	{
+		t_location_vector::iterator l(std::find_if(
+			  state.myAnts.begin()
+			, state.myAnts.end()
+			, find_by_loc(o->start)));
+		if (l != state.myAnts.end())
+			state.myAnts.erase(l);
+		return false;
+	}
+	return true;
+}
 
 //finishes the turn
 void Bot::endTurn()
@@ -694,4 +897,33 @@ Location * Bot::closest_ant( const Location &loc )
   }
 
   return l;
+}
+
+Location * Bot::closest_ant_for_reverse( const Location &loc )
+{
+	Location * l(0);
+
+	if (!state.myAnts.size())
+		return l;
+
+	if (state.myAnts.size() == 1)
+		return state.myAnts[0];
+
+	double min_dist=std::numeric_limits<double>::max(), dist(min_dist);
+	for (t_location_vector::iterator 
+		  itb(state.myAnts.begin())
+		, ite(state.myAnts.end())
+		; itb!=ite
+		; ++itb)
+	{
+		Location * ll(*itb);
+		dist = state.distance(loc, *ll);
+		if (min_dist > dist)
+		{
+			l = ll;
+			min_dist = dist;
+		}
+	}
+
+	return l;
 }

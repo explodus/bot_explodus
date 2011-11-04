@@ -56,7 +56,7 @@ struct State
 		t_moves _moves;
 
     std::vector<std::vector<Square> > grid;
-    std::vector<Location*> 
+		t_location_vector
         myAnts
       , enemyAnts
       , myHills
