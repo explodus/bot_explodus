@@ -114,7 +114,7 @@ void State::endMoves()
       << CDIRECTIONS[itb->d] 
     << endl;
 		bug << "make move real from " << *itb->from << " to " << *itb->to << endl;
-		//++itb->from->cost;
+		++itb->from->pheromone;
   }
   _moves.clear();
 }

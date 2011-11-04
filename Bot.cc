@@ -84,6 +84,7 @@ bool calc::Path::astar( State &state )
 {
 	t_location_deque olist; // open
 	t_location_vector clist; // closed
+	clist.reserve(1000);
 
   cost = 0;
 
@@ -104,8 +105,11 @@ bool calc::Path::astar( State &state )
 		  Location *v = olist.front();
 
 			if (*v == *dest 
-				|| clist.size() > static_cast<t_location_deque::size_type>(astar_break))
+				|| olist.size() > static_cast<t_location_deque::size_type>(astar_break))
 			  break;
+
+			if (clist.size()>300)
+				break;
 
       olist.pop_front();
 
@@ -122,7 +126,7 @@ bool calc::Path::astar( State &state )
 			  if (vi != clist.end())
 				  continue;
 
-				if (loc->isWater || loc->ant != -1 || !loc->isVisible)
+				if (loc->isWater || loc->ant != -1 /*|| !loc->isVisible*/)
 				{
 					clist.push_back(loc);
 					continue;
@@ -137,15 +141,13 @@ bool calc::Path::astar( State &state )
           , find_by_loc(successor)));
 			  if (vd != olist.end() && new_weight >= v->weightcosts())
 				  continue;
+				if (vd != olist.end())
+					olist.erase(vd);
 
 				successor->prev = v;
 			  successor->cost = new_weight;
-
-			  if (vd != olist.end())
-				  vd = olist.erase(vd);
-
-			  olist.push_back(successor);
-        cost += successor->weightcosts();
+				olist.push_back(successor);
+				cost += successor->weightcosts();
 		  }
 		
 		  std::sort(olist.begin(), olist.end(), pless<Location>());
@@ -153,7 +155,8 @@ bool calc::Path::astar( State &state )
 		  clist.push_back(v);
 	  } while (!olist.empty());
 
-    state.bug << "path olist size: " << olist.size() << endl;
+		state.bug << "path olist size: " << olist.size() << endl;
+		state.bug << "path clist size: " << clist.size() << endl;
 
     if (olist.empty())
 		  return false;
@@ -254,7 +257,7 @@ void Bot::makeMoves()
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
-				calc::Path::astar_break = 48;
+				calc::Path::astar_break = 128;
 				int result = makeMoves(*itb, o);
 				if (result < 0)
 					break;
@@ -290,6 +293,8 @@ void Bot::makeMoves()
 			; itb != ite
 			; ++itb)
 		{
+			if (itb->turn_counter>0)
+				continue;
 			if (state.timer.getTime() > 450)
 				break;
 			t_location_vector::iterator l(std::find_if(
@@ -300,15 +305,6 @@ void Bot::makeMoves()
 				state.myAnts.erase(l);
 
 			postMakeMoves(*itb, itb->start);
-			if (
-				   itb->turn_counter == 0 
-				|| (itb->searchFood && !itb->dest->isFood)
-				|| (itb->searchHill && !itb->dest->isHill))
-			{
-				orders.erase(itb);
-				itb = orders.begin();
-				ite = orders.end();
-			}
 		}
 
 		state.bug << "path moves ant_count " << state.myAnts.size() << endl;
@@ -344,7 +340,7 @@ void Bot::makeMoves()
 			Location * ant = *itb;
 			Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
 
-			calc::Path::astar_break = 12;
+			calc::Path::astar_break = 24;
 			calc::Path p(ant, loc, state);
 
 			if (!p.nodes.size())
@@ -363,6 +359,21 @@ void Bot::makeMoves()
 				break;
 
 			if (itb->nodes.size()==0)
+			{
+				itb = orders.erase(itb);
+				itb = orders.begin();
+			}
+			else if (itb->turn_counter == 0)
+			{
+				itb = orders.erase(itb);
+				itb = orders.begin();
+			}
+			else if (itb->searchFood && itb->dest && !itb->dest->isFood)
+			{
+				itb = orders.erase(itb);
+				itb = orders.begin();
+			}
+			else if (itb->searchHill && itb->dest && !itb->dest->isHill)
 			{
 				itb = orders.erase(itb);
 				itb = orders.begin();
