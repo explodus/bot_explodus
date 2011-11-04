@@ -104,7 +104,7 @@ bool calc::Path::astar( State &state )
 		  Location *v = olist.front();
 
 			if (*v == *dest 
-				|| olist.size() > static_cast<t_location_deque::size_type>(astar_break))
+				|| clist.size() > static_cast<t_location_deque::size_type>(astar_break))
 			  break;
 
       olist.pop_front();
@@ -115,19 +115,18 @@ bool calc::Path::astar( State &state )
 		  { // expand vertex
 			  Location *loc(state.getLocation(*v, static_cast<TDIRECTIONS>(d)));
 
-        if (loc->isWater || loc->ant != -1 /*|| !loc->isVisible*/)
-        {
-					clist.push_back(v);
-					clist.push_back(loc);
-          continue;
-        }
-
 			  t_location_vector::iterator vi(std::find_if(
             clist.begin()
           , clist.end()
           , find_by_loc(loc)));
 			  if (vi != clist.end())
 				  continue;
+
+				if (loc->isWater || loc->ant != -1 || !loc->isVisible)
+				{
+					clist.push_back(loc);
+					continue;
+				}
 
 			  Location *successor(loc);
         long long new_weight(v->weightcosts() + successor->weightcosts());
