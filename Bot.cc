@@ -117,7 +117,8 @@ bool calc::Path::astar( State &state )
 
         if (loc->isWater || loc->ant != -1 /*|| !loc->isVisible*/)
         {
-          clist.push_back(v);
+					clist.push_back(v);
+					clist.push_back(loc);
           continue;
         }
 
@@ -139,7 +140,7 @@ bool calc::Path::astar( State &state )
 				  continue;
 
 				successor->prev = v;
-			  successor->weight += new_weight;
+			  successor->cost = new_weight;
 
 			  if (vd != olist.end())
 				  vd = olist.erase(vd);
@@ -254,7 +255,7 @@ void Bot::makeMoves()
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
-				calc::Path::astar_break = 96;
+				calc::Path::astar_break = 48;
 				int result = makeMoves(*itb, o);
 				if (result < 0)
 					break;
@@ -300,6 +301,12 @@ void Bot::makeMoves()
 				state.myAnts.erase(l);
 
 			postMakeMoves(*itb, itb->start);
+			if (itb->turn_counter == 0)
+			{
+				orders.erase(itb);
+				itb = orders.begin();
+				ite = orders.end();
+			}
 		}
 
 		state.bug << "path moves ant_count " << state.myAnts.size() << endl;

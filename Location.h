@@ -82,7 +82,7 @@ struct Location
     isVisible = isHill = isFood = isDead = 0;
     ant = hillPlayer = -1;
 		cost = 1;
-    weight = isWater? 99: 10;
+    weight = isWater ? 9999 : 10;
 		prev = 0;
   }
 

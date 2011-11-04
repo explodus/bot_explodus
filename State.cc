@@ -114,7 +114,7 @@ void State::endMoves()
       << CDIRECTIONS[itb->d] 
     << endl;
 		bug << "make move real from " << *itb->from << " to " << *itb->to << endl;
-		++itb->from->cost;
+		//++itb->from->cost;
   }
   _moves.clear();
 }
@@ -328,7 +328,7 @@ istream& operator>>(istream &is, State &state)
       {
         is >> row >> col;
         state.grid[row][col].loc.isWater = 1;
-        state.grid[row][col].loc.weight = 99;
+        state.grid[row][col].loc.weight = 9999;
       }
       else if(inputType == "f") //food square
       {
@@ -402,15 +402,15 @@ istream& operator>>(istream &is, State &state)
 
 void costs_around( State &state, int row, int col, int new_costs )
 {
-	Location& l(state.grid[row][col].loc);
-	if (!l.around[e_north]->isWater)
-		l.around[e_north]->cost = new_costs;
-	if (!l.around[e_east]->isWater)
-		l.around[e_east]->cost = new_costs;
-	if (!l.around[e_south]->isWater)
-		l.around[e_south]->cost = new_costs;
-	if (!l.around[e_west]->isWater)
-		l.around[e_west]->cost = new_costs;
+	//Location& l(state.grid[row][col].loc);
+	//if (!l.around[e_north]->isWater)
+	//	l.around[e_north]->cost = new_costs;
+	//if (!l.around[e_east]->isWater)
+	//	l.around[e_east]->cost = new_costs;
+	//if (!l.around[e_south]->isWater)
+	//	l.around[e_south]->cost = new_costs;
+	//if (!l.around[e_west]->isWater)
+	//	l.around[e_west]->cost = new_costs;
 
 	//for(int d(e_north); d<TDIRECTIONS_SIZE; ++d)
 	//{ // expand vertex
