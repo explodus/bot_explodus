@@ -254,6 +254,7 @@ void Bot::makeMoves()
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
+				calc::Path::astar_break = 96;
 				int result = makeMoves(*itb, o);
 				if (result < 0)
 					break;
@@ -274,6 +275,7 @@ void Bot::makeMoves()
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
+				calc::Path::astar_break = 96;
 				int result = makeMoves(*itb, o);
 				if (result < 0)
 					break;
@@ -302,7 +304,7 @@ void Bot::makeMoves()
 
 		state.bug << "path moves ant_count " << state.myAnts.size() << endl;
 
-		if (ant_count > 50)
+		if (ant_count > 100)
 		{
 			for (t_location_vector::iterator 
 				  itb(state.enemyAnts.begin())
@@ -314,6 +316,7 @@ void Bot::makeMoves()
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
+				calc::Path::astar_break = 12;
 				int result = makeMoves(*itb, o);
 				if (result < 0)
 					break;
@@ -332,7 +335,7 @@ void Bot::makeMoves()
 			Location * ant = *itb;
 			Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
 
-			calc::Path::astar_break = 12;
+			calc::Path::astar_break = 24;
 			calc::Path p(ant, loc, state);
 
 			if (!p.nodes.size())
@@ -706,7 +709,6 @@ int Bot::makeMoves(Location* loc, calc::t_order::iterator& o)
 	if (!ant)
 		return -1;
 	{
-		calc::Path::astar_break = 48;
 		calc::Path p(ant, loc, state);
 
 		if (!p.nodes.size())
