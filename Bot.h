@@ -29,7 +29,8 @@ namespace calc
 
     t_location_deque nodes;
 
-    static int astar_break;
+		static int astar_obreak;
+		static int astar_cbreak;
 
 		bool searchFood, searchHill, searchUnseen;
 
@@ -166,6 +167,11 @@ struct Bot
   void makeMoves();   //makes moves for a single turn
 
 	int makeMoves(Location* loc, calc::t_order::iterator& o);
+
+	void sort_all();
+
+	void sort_one( t_location_vector &to_sort_vector, Location & top_left );
+
 	bool preMakeMoves(calc::t_order::iterator &o, Location * loc);
 	void postMakeMoves(calc::Path & p, Location * ant);
 

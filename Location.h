@@ -22,7 +22,8 @@ struct Location
   int ant, hillPlayer;
 
   int row, col;
-  double dist_food;
+	double dist;
+	double dist_food;
   double dist_hill;
   double dist_enemy;
   double dist_ant;
