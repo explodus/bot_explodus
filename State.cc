@@ -8,6 +8,7 @@ State::State()
 {
   gameover = 0;
   turn = 0;
+  seenHill = 0;
   bug.open("debug.txt");
 };
 
@@ -78,7 +79,7 @@ void State::reset()
 //outputs move information to the engine
 void State::makeMoves(Location &loc, Location &dest, TDIRECTIONS direction)
 {
-	bug << "make move from " << loc << " to " << dest << endl;;
+  bug << "make move from " << loc << " to " << dest << endl;;
   moves m;
   m.from = &loc;
   m.to = &dest;
@@ -114,7 +115,9 @@ void State::endMoves()
       << CDIRECTIONS[itb->d] 
     << endl;
 		bug << "make move real from " << *itb->from << " to " << *itb->to << endl;
-		++itb->from->pheromone;
+		//++itb->from->pheromone;
+		if(itb->to == seenHill)
+			seenHill = 0;
   }
   _moves.clear();
 }
@@ -374,6 +377,8 @@ istream& operator>>(istream &is, State &state)
         {
           state.enemyHills.push_back(&state.grid[row][col].loc);
           costs_around(state, row, col, -40);
+					if(state.seenHill==0)
+						state.seenHill = &state.grid[row][col].loc;
         }
       }
       else if(inputType == "players") //player information
@@ -402,15 +407,15 @@ istream& operator>>(istream &is, State &state)
 
 void costs_around( State &state, int row, int col, int new_costs )
 {
-	//Location& l(state.grid[row][col].loc);
-	//if (!l.around[e_north]->isWater)
-	//	l.around[e_north]->cost = new_costs;
-	//if (!l.around[e_east]->isWater)
-	//	l.around[e_east]->cost = new_costs;
-	//if (!l.around[e_south]->isWater)
-	//	l.around[e_south]->cost = new_costs;
-	//if (!l.around[e_west]->isWater)
-	//	l.around[e_west]->cost = new_costs;
+	Location& l(state.grid[row][col].loc);
+	if (!l.around[e_north]->isWater)
+		l.around[e_north]->cost = new_costs;
+	if (!l.around[e_east]->isWater)
+		l.around[e_east]->cost = new_costs;
+	if (!l.around[e_south]->isWater)
+		l.around[e_south]->cost = new_costs;
+	if (!l.around[e_west]->isWater)
+		l.around[e_west]->cost = new_costs;
 
 	//for(int d(e_north); d<TDIRECTIONS_SIZE; ++d)
 	//{ // expand vertex
