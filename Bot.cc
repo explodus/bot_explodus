@@ -362,9 +362,13 @@ void Bot::makeMoves()
 			Location * ant = *itb;
 			Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
 			if(state.seenHill)
+			{
+				calc::Path::astar_obreak = 96;
 				loc = state.seenHill;
+			}
+			else
+				calc::Path::astar_obreak = 24;
 
-			calc::Path::astar_obreak = 24;
 			calc::Path p(ant, loc, state);
 
 			if (!p.nodes.size())
@@ -392,6 +396,8 @@ void Bot::makeMoves()
 				itb = orders.erase(itb);
 				itb = orders.begin();
 			}
+			else if (itb->dest && state.seenHill && itb->dest == state.seenHill)
+				continue;
 			else if (itb->searchFood && itb->dest && !itb->dest->isFood)
 			{
 				itb = orders.erase(itb);
