@@ -9,8 +9,8 @@
 
 using namespace std;
 
-int calc::Path::astar_obreak = 128;
-int calc::Path::astar_cbreak = 128;
+int calc::Path::astar_obreak = 100;
+int calc::Path::astar_cbreak = 100;
 
 const int NUM_INPUTS = 72;
 const int NUM_OUTPUTS = 1;
@@ -115,13 +115,10 @@ bool calc::Path::astar( State &state )
 		  Location *v = olist.front();
 
 			if (*v == *dest)
-				break;
-
-			//if (*v == *dest 
-			//	|| olist.size() > static_cast<t_location_deque::size_type>(astar_obreak))
-			//  break;
-
-			if (clist.size() > static_cast<t_location_vector::size_type>(astar_cbreak))
+			  break;			
+			if (olist.size() > static_cast<t_location_deque::size_type>(astar_obreak))
+			  break;			
+			if (clist.size() > static_cast<t_location_deque::size_type>(astar_cbreak))
 			  break;
 
       olist.pop_front();
@@ -248,10 +245,9 @@ void Bot::makeMoves()
 		return;
 
 #define REVERSE_SEARCH
+#ifdef REVERSE_SEARCH
 		calc::t_order::iterator o;
 		t_location_vector::iterator l;
-
-		calc::Path::astar_cbreak = 128;
 
 		for (calc::t_order::iterator 
 			  itb(orders.begin())
@@ -260,12 +256,10 @@ void Bot::makeMoves()
 			; ++itb)
 			itb->turn_counter = 0;
 
+		sort_all();
+
 		if (state.timer.getTime() < 450 && food_count)
 		{
-			{ // sort food
-				sort_all();
-			}
-
 			for (t_location_vector::iterator 
 				  itb(state.food.begin())
 				, ite(state.food.end())
@@ -280,12 +274,15 @@ void Bot::makeMoves()
 				int result = makeMoves(*itb, o);
 				if (result < 0)
 					break;
+				result = makeMoves(*itb, o);
+				if (result < 0)
+					break;
 			}
 		}
 
 		state.bug << "after food search ant_count " << state.myAnts.size() << endl;
 
-		//if (ant_count > 25)
+		if (ant_count > 25)
 		{
 			for (t_location_vector::iterator 
 				  itb(state.enemyHills.begin())
@@ -329,14 +326,11 @@ void Bot::makeMoves()
 				state.myAnts.erase(l);
 
 			postMakeMoves(*itb, itb->start);
-
-			if (itb->nodes.size() == 0 && itb->start != itb->dest && (itb->searchFood || itb->searchHill))
-				itb->astar(state);
 		}
 
 		state.bug << "path moves ant_count " << state.myAnts.size() << endl;
 
-		//if (ant_count > 100)
+		if (ant_count > 50)
 		{
 			for (t_location_vector::iterator 
 				  itb(state.enemyAnts.begin())
@@ -349,10 +343,6 @@ void Bot::makeMoves()
 				if (!preMakeMoves(o, *itb))
 					continue;
 				calc::Path::astar_obreak = 12;
-				if (makeMoves(*itb, o) < 0)
-					break;
-				if (makeMoves(*itb, o) < 0)
-					break;
 				if (makeMoves(*itb, o) < 0)
 					break;
 				if (makeMoves(*itb, o) < 0)
@@ -371,9 +361,10 @@ void Bot::makeMoves()
 
 			Location * ant = *itb;
 			Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
+			if(state.seenHill)
+				loc = state.seenHill;
 
 			calc::Path::astar_obreak = 24;
-			calc::Path::astar_cbreak = 48;
 			calc::Path p(ant, loc, state);
 
 			if (!p.nodes.size())
@@ -415,7 +406,6 @@ void Bot::makeMoves()
 				++itb;
 		}
 
-#ifdef REVERSE_SEARCH
 #else
     //picks out moves for each ant
     for(std::vector<Location*>::size_type 
@@ -452,7 +442,7 @@ void Bot::makeMoves()
 					{ // only attacking
 						if (state.enemyHills.size())
 						{
-							calc::Path::astar_obreak = 72;
+							calc::Path::astar_break = 72;
 							ptmp_hill = calc::Path(
 								  ant_loc
 								, state.enemyHills[0]
@@ -460,7 +450,7 @@ void Bot::makeMoves()
 						}
 						if (!ptmp_hill.dest)
 						{
-							calc::Path::astar_obreak = 12;
+							calc::Path::astar_break = 12;
 							ptmp_enemy = calc::Path(
 								  ant_loc
 								, closest_enemy(*ant_loc)
@@ -469,12 +459,12 @@ void Bot::makeMoves()
 
 						if (!ptmp_hill.dest && !ptmp_enemy.dest)
 						{
-							calc::Path::astar_obreak = 48;
+							calc::Path::astar_break = 48;
 							ptmp_food = calc::Path(
 								  ant_loc
 								, closest_food(*ant_loc)
 								, state);
-							calc::Path::astar_obreak = 24;
+							calc::Path::astar_break = 24;
 							ptmp_center = calc::Path(
 									ant_loc
 								, &state.grid[state.rows/2][state.cols/2].loc
@@ -483,22 +473,22 @@ void Bot::makeMoves()
 					}
 					else if (ant_count > 50)
 					{
-						calc::Path::astar_obreak = 72;
+						calc::Path::astar_break = 72;
 						ptmp_hill = calc::Path(
 							  ant_loc
 							, closest_hill(*ant_loc)
 							, state);
-						calc::Path::astar_obreak = 72;
+						calc::Path::astar_break = 72;
 						ptmp_food = calc::Path(
 							  ant_loc
 							, closest_food(*ant_loc)
 							, state);
-						calc::Path::astar_obreak = 24;
+						calc::Path::astar_break = 24;
 						ptmp_enemy = calc::Path(
 							  ant_loc
 							, closest_enemy(*ant_loc)
 							, state);
-						calc::Path::astar_obreak = 12;
+						calc::Path::astar_break = 12;
 						ptmp_center = calc::Path(
 							  ant_loc
 							, &state.grid[state.rows/2][state.cols/2].loc
@@ -506,23 +496,23 @@ void Bot::makeMoves()
 					}
 					else
 					{
-						//calc::Path::astar_obreak = 100;
+						//calc::Path::astar_break = 100;
 						//if (ant_count > 30)
 						//	ptmp_hill = calc::Path(
 						//	  ant_loc
 						//	, closest_hill(*ant_loc)
 						//	, state);
-						calc::Path::astar_obreak = 128;
+						calc::Path::astar_break = 128;
 						ptmp_food = calc::Path(
 							  ant_loc
 							, closest_food(*ant_loc)
 							, state);
-						//calc::Path::astar_obreak = 24;
+						//calc::Path::astar_break = 24;
 						//ptmp_enemy = calc::Path(
 						//	  ant_loc
 						//	, closest_enemy(*ant_loc)
 						//	, state);
-						calc::Path::astar_obreak = 12;
+						calc::Path::astar_break = 12;
 						ptmp_center = calc::Path(
 							  ant_loc
 							, &state.grid[state.rows/2][state.cols/2].loc
@@ -994,27 +984,27 @@ Location * Bot::closest_ant_for_reverse( const Location &loc )
 
 void Bot::sort_all()
 {
-	Location & top_left = state.grid[0][0].loc;
-	sort_one(state.food, top_left);
-	sort_one(state.myAnts, top_left);
-	sort_one(state.enemyAnts, top_left);
-	sort_one(state.enemyHills, top_left);
+       Location & top_left = state.grid[0][0].loc;
+       sort_one(state.food, top_left);
+       sort_one(state.myAnts, top_left);
+       sort_one(state.enemyAnts, top_left);
+       sort_one(state.enemyHills, top_left);
 }
 
 void Bot::sort_one( t_location_vector &to_sort_vector, Location & top_left )
 {
-	struct s_sort_all 
-	{
-		static bool sort(const Location * lhs, const Location * rhs)
-		{ return lhs->dist < rhs->dist; }
-	};
+       struct s_sort_all
+       {
+               static bool sort(const Location * lhs, const Location * rhs)
+               { return lhs->dist < rhs->dist; }
+       };
 
-	double min_dist=std::numeric_limits<double>::max(), dist(min_dist);
-	for (t_location_vector::iterator 
-		  itb(to_sort_vector.begin())
-		, ite(to_sort_vector.end())
-		; itb!=ite
-		; ++itb)
-		(*itb)->dist = state.distance(top_left, **itb);
-	sort(to_sort_vector.begin(), to_sort_vector.end(), s_sort_all::sort);
+       double min_dist=std::numeric_limits<double>::max(), dist(min_dist);
+       for (t_location_vector::iterator
+                 itb(to_sort_vector.begin())
+               , ite(to_sort_vector.end())
+               ; itb!=ite
+               ; ++itb)
+               (*itb)->dist = state.distance(top_left, **itb);
+       sort(to_sort_vector.begin(), to_sort_vector.end(), s_sort_all::sort);
 }

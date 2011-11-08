@@ -56,12 +56,14 @@ struct State
 		t_moves _moves;
 
     std::vector<std::vector<Square> > grid;
-		t_location_vector
+	t_location_vector
         myAnts
       , enemyAnts
       , myHills
       , enemyHills
       , food;
+
+	Location * seenHill;
 
     Timer timer;
     Bug bug;
