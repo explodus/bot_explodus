@@ -133,7 +133,4 @@ inline std::ostream& operator<<(std::ostream &os, const Location &l)
   return os;
 }
 
-inline int manhattan_method(const Location & l1, const Location & l2)
-{ return 10 * (abs(l1.row - l2.row) + abs(l1.col - l2.col)); }
-
 #endif //LOCATION_H_

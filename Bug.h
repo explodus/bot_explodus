@@ -12,6 +12,7 @@
 //#define TRAIN_ANN
 //#define TEST_ANN
 //#define USE_ANN
+#define REVERSE_SEARCH
 
 /*
     struct for debugging - this is gross but can be used pretty much like an ofstream,

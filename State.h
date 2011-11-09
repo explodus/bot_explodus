@@ -10,6 +10,7 @@
 #include <queue>
 #include <stack>
 #include <list>
+#include <xutility>
 
 #include "Timer.h"
 #include "Bug.h"
@@ -80,7 +81,39 @@ struct State
     void makeMoves(Location &loc, Location &dest, TDIRECTIONS direction);
 		void endMoves();
 
-    double distance(const Location &loc1, const Location &loc2);
+		/// returns the euclidean distance between two locations 
+		/// with the edges wrapped
+    inline double distance(const Location &loc1, const Location &loc2)
+		{ 
+			int d1 = abs(loc1.row-loc2.row),
+				d2 = abs(loc1.col-loc2.col),
+				dr = std::min(d1, rows-d1),
+				dc = std::min(d2, cols-d2);
+			return sqrt(static_cast<double>(dr*dr + dc*dc));
+		}
+
+		inline int manhattan_method(const Location & l1, const Location & l2)
+		{ return 2 * (abs(l1.row - l2.row) + abs(l1.col - l2.col)); }
+		//inline int manhattan_method(const Location & l, const Location & dest)
+		//{ 
+		//	static int D(2)
+		//		, D2(static_cast<int>(sqrt(2.0)*static_cast<double>(D)));
+		//	int h_d = std::min(std::abs(l.col-dest.col), std::abs(l.row-dest.row));
+		//	int h_s = (std::abs(l.col-dest.col) + std::abs(l.row-dest.row));
+		//	return (D2 * h_d) + (D * (h_s - 2*h_d));
+		//}
+
+		/// returns the distance between two locations 
+		/// with the edges wrapped
+		//inline int manhattan_method(const Location & loc1, const Location & loc2)
+		//{ 
+		//	int d1 = abs(loc1.row-loc2.row),
+		//		d2 = abs(loc1.col-loc2.col),
+		//		dr = std::min(d1, rows-d1),
+		//		dc = std::min(d2, cols-d2);
+		//	return static_cast<int>(sqrt(static_cast<double>(dr*dr + dc*dc))*10.0);
+		//}
+
 		/// returns the new location from moving in a 
 		/// given direction with the edges wrapped
 		//inline Location* State::getLocation(const Location &loc, int direction)
