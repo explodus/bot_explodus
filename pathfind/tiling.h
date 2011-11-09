@@ -216,10 +216,15 @@ namespace PathFind
             return m_rows;
         }
 
-        TilingNodeInfo & getNodeInfo(int nodeId) const
+        TilingNodeInfo & getNodeInfo(int nodeId)
         {
             return (TilingNodeInfo &)m_graph.getNodeInfo(nodeId);
         }
+
+				const TilingNodeInfo & getNodeInfo(int nodeId) const
+				{
+					return (TilingNodeInfo &)m_graph.getNodeInfo(nodeId);
+				}
 
         Type getType() const
         {

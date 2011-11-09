@@ -22,9 +22,15 @@ State::~State()
 void State::setup()
 {
   grid = vector<vector<Square> >(rows, vector<Square>(cols, Square()));
-  for(int row(0); row<rows; ++row)
+
+	tiling.reset(new PathFind::Tiling(PathFind::Tiling::HEX, rows, cols));
+
+	for(int row(0); row<rows; ++row)
     for(int col(0); col<cols; ++col)
+		{
       grid[row][col].loc = Location(row, col);
+			tiling->getNodeInfo(tiling->getNodeId(row, col)).setObstacle(false);
+		}
 
 	for(int row(0); row<rows; ++row)
 	{
@@ -154,8 +160,7 @@ void State::updateVisionInformation()
       {
         nLoc = getLocation(*cLoc, d);
 
-        if(!visited[nLoc->row][nLoc->col] 
-        && distance(*sLoc, *nLoc) <= viewradius)
+        if(!visited[nLoc->row][nLoc->col] && distance(*sLoc, *nLoc) <= viewradius)
         {
           nLoc->isVisible = 1;
           locQueue.push(nLoc);
@@ -320,6 +325,7 @@ istream& operator>>(istream &is, State &state)
       if(inputType == "w") //water square
       {
         is >> row >> col;
+				state.tiling->getNodeInfo(state.tiling->getNodeId(row, col)).setObstacle(true);
         state.grid[row][col].loc.isWater = 1;
         state.grid[row][col].loc.weight = 999;
       }

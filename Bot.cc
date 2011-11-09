@@ -343,14 +343,14 @@ calc::Path::Path( Location* s, Location* d, State &state )
 	, searchHill(false)
 	, searchUnseen(false)
 {
-	PathFind::Tiling tiling(PathFind::Tiling::HEX, state.rows, state.cols);
+	state.bug << "before astar" << std::endl;
 
 #ifdef DEBUG
 	state.bug 
 		<< "id_start: " 
-		<< tiling.getNodeId(start->row, start->col) 
+		<< state.tiling->getNodeId(start->row, start->col) 
 		<< "id_dest: " 
-		<< tiling.getNodeId(dest->row, dest->col) 
+		<< state.tiling->getNodeId(dest->row, dest->col) 
 		<< std::endl;
 #endif // DEBUG
 
@@ -360,13 +360,24 @@ calc::Path::Path( Location* s, Location* d, State &state )
 		   start 
 		&& dest 
 		&& fr.findPath(
-				tiling
-			, tiling.getNodeId(start->row, start->col)
-			, tiling.getNodeId(dest->row, dest->col)))
+				*state.tiling.get()
+			, state.tiling->getNodeId(start->row, start->col)
+			, state.tiling->getNodeId(dest->row, dest->col)))
 	{
+		nodes.clear();
+		for (std::vector<int>::const_iterator 
+			  itb(fr.getPath().begin())
+			, ite(fr.getPath().end())
+			; itb != ite
+			; ++itb)
+		{
+			PathFind::TilingNodeInfo & info = state.tiling->getNodeInfo(*itb);
+			nodes.push_back(&state.grid[info.getRow()][info.getColumn()].loc);
+		}
 #ifdef DEBUG
-		tiling.printFormatted(state.bug.file, fr.getPath());
+		state.tiling->printFormatted(state.bug.file/*, fr.getPath()*/);
 		state.bug << "path: " << *this << std::endl;
+		state.bug << "path_size: " << nodes.size() << std::endl;
 #endif // DEBUG
 	}
 	//state.bug << "before astar" << std::endl;
@@ -393,7 +404,7 @@ calc::Path::Path( Location* s, Location* d, State &state )
 	//		cost += (*itb)->weightcosts();
 	//	state.bug << "path costs: "<< cost << std::endl;
 	//}
-	//state.bug << "after astar" << std::endl;
+	state.bug << "after astar" << std::endl;
 }
 
 //constructor

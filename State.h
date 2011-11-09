@@ -16,6 +16,7 @@
 #include "Bug.h"
 #include "Square.h"
 #include "Location.h"
+#include "pathfind/tiling.h"
 
 /*
     constants
@@ -68,6 +69,8 @@ struct State
 		, food;
 
 	Location * seenHill;
+
+	std::tr1::shared_ptr<PathFind::Tiling> tiling;
 
 	Timer timer;
 	Bug bug;
