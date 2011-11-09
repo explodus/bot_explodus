@@ -12,6 +12,7 @@
 #include "scn/scnANN.h"
 #include "pathfind/tiling.h"
 #include "pathfind/fringesearch.h"
+#include "pathfind/astar.h"
 
 using namespace std;
 
@@ -354,7 +355,8 @@ calc::Path::Path( Location* s, Location* d, State &state )
 		<< std::endl;
 #endif // DEBUG
 
-	PathFind::FringeSearch<> fr;
+	//PathFind::FringeSearch<> fr;
+	PathFind::AStar<> fr;
 	fr.setNodesLimit(s_nodesLimit); 
 	if (
 		   start 
@@ -364,18 +366,34 @@ calc::Path::Path( Location* s, Location* d, State &state )
 			, state.tiling->getNodeId(start->row, start->col)
 			, state.tiling->getNodeId(dest->row, dest->col)))
 	{
-		nodes.clear();
+		searchUnseen = false;
+		if (dest->isFood)
+			searchFood = true;
+		else if(!dest->isFood)
+			searchFood = false;
+		else if (dest->isHill)
+			searchHill = true;
+		else if(!dest->isHill)
+			searchHill = false;
+		else
+			searchUnseen = true;
+
+		nodes.clear(); unsigned cnt(0);
 		for (std::vector<int>::const_iterator 
 			  itb(fr.getPath().begin())
 			, ite(fr.getPath().end())
 			; itb != ite
-			; ++itb)
+			; ++itb, ++cnt)
 		{
 			PathFind::TilingNodeInfo & info = state.tiling->getNodeInfo(*itb);
 			nodes.push_back(&state.grid[info.getRow()][info.getColumn()].loc);
+			if (cnt > 4)
+				break;
 		}
+
 #ifdef DEBUG
-		state.tiling->printFormatted(state.bug.file/*, fr.getPath()*/);
+		state.tiling->printFormatted(state.bug.file, fr.getPath());
+		state.bug << "tiling: " << fr.getPath().size() << std::endl;
 		state.bug << "path: " << *this << std::endl;
 		state.bug << "path_size: " << nodes.size() << std::endl;
 #endif // DEBUG
