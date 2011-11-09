@@ -47,41 +47,7 @@ namespace calc
     Path( 
         Location* s
       , Location* d
-      , State &state )
-      : start( s )
-      , dest( d )
-      , cost(std::numeric_limits<unsigned int>::max())
-			, turn_counter(0)
-			, searchFood(false)
-			, searchHill(false)
-			, searchUnseen(false)
-    {
-			state.bug << "before astar" << std::endl;
-
-      if (start && dest && astar(state))
-      {
-				searchUnseen = false;
-				if (dest->isFood)
-					searchFood = true;
-				else if(!dest->isFood)
-					searchFood = false;
-				else if (dest->isHill)
-					searchHill = true;
-				else if(!dest->isHill)
-					searchHill = false;
-				else
-					searchUnseen = true;
-        cost = 0;
-        for (t_location_deque::const_iterator 
-            itb(nodes.begin())
-          , ite(nodes.end())
-          ; itb != ite
-          ; ++itb)
-          cost += (*itb)->weightcosts();
-				state.bug << "path costs: "<< cost << std::endl;
-      }
-			state.bug << "after astar" << std::endl;
-    }
+      , State &state );
 
     Path( const Path & p) 
       : start(p.start)

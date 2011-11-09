@@ -7,7 +7,7 @@
     //#define DEBUG
 #endif
 
-//#define DEBUG
+#define DEBUG
 //#define ANN
 //#define TRAIN_ANN
 //#define TEST_ANN

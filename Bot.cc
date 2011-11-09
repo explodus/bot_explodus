@@ -2,6 +2,7 @@
 #include <limits>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <set>
 #include <functional>
 #include <ios>
@@ -9,11 +10,19 @@
 #include <assert.h>
 
 #include "scn/scnANN.h"
+#include "pathfind/tiling.h"
+#include "pathfind/fringesearch.h"
 
 using namespace std;
 
 int calc::Path::astar_obreak = 100;
 int calc::Path::astar_cbreak = 128;
+
+static const int s_numberRuns = 100;
+static const int s_columns = 50;
+static const int s_rows = 50;
+static const float s_obstaclePercentage = 0.2;
+static const long long int s_nodesLimit = 100000000L; 
 
 const int NUM_INPUTS = 72;
 const int NUM_OUTPUTS = 1;
@@ -323,6 +332,68 @@ bool calc::Path::astar( State &state )
   }
 
   return true;
+}
+
+calc::Path::Path( Location* s, Location* d, State &state ) 
+	: start( s )
+	, dest( d )
+	, cost(std::numeric_limits<unsigned int>::max())
+	, turn_counter(0)
+	, searchFood(false)
+	, searchHill(false)
+	, searchUnseen(false)
+{
+	PathFind::Tiling tiling(PathFind::Tiling::HEX, state.rows, state.cols);
+
+#ifdef DEBUG
+	state.bug 
+		<< "id_start: " 
+		<< tiling.getNodeId(start->row, start->col) 
+		<< "id_dest: " 
+		<< tiling.getNodeId(dest->row, dest->col) 
+		<< std::endl;
+#endif // DEBUG
+
+	PathFind::FringeSearch<> fr;
+	fr.setNodesLimit(s_nodesLimit); 
+	if (
+		   start 
+		&& dest 
+		&& fr.findPath(
+				tiling
+			, tiling.getNodeId(start->row, start->col)
+			, tiling.getNodeId(dest->row, dest->col)))
+	{
+#ifdef DEBUG
+		tiling.printFormatted(state.bug.file, fr.getPath());
+		state.bug << "path: " << *this << std::endl;
+#endif // DEBUG
+	}
+	//state.bug << "before astar" << std::endl;
+
+	//if (start && dest && astar(state))
+	//{
+	//	searchUnseen = false;
+	//	if (dest->isFood)
+	//		searchFood = true;
+	//	else if(!dest->isFood)
+	//		searchFood = false;
+	//	else if (dest->isHill)
+	//		searchHill = true;
+	//	else if(!dest->isHill)
+	//		searchHill = false;
+	//	else
+	//		searchUnseen = true;
+	//	cost = 0;
+	//	for (t_location_deque::const_iterator 
+	//		itb(nodes.begin())
+	//		, ite(nodes.end())
+	//		; itb != ite
+	//		; ++itb)
+	//		cost += (*itb)->weightcosts();
+	//	state.bug << "path costs: "<< cost << std::endl;
+	//}
+	//state.bug << "after astar" << std::endl;
 }
 
 //constructor
