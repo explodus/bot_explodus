@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-O3 -funroll-loops -c
 LDFLAGS=-O2 -lm
-SOURCES=Bot.cc MyBot.cc State.cc scn/scnLayer.cc scn/scnNode.cc scn/scnANN.cc
+SOURCES=Bot.cc MyBot.cc State.cc scn/scnLayer.cc scn/scnNode.cc scn/scnANN.cc pathfind/idastar.cpp pathfind/tiling.cpp pathfind/statistics.cpp pathfind/astar.cpp pathfind/searchutils.cpp pathfind/util.cpp pathfind/environment.cpp pathfind/search.cpp pathfind/error.cpp pathfind/version.cpp
 OBJECTS=$(SOURCES:.cc=.o)
 EXECUTABLE=MyBot
 

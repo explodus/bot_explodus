@@ -27,9 +27,7 @@
 #include <algorithm>
 #include <vector>
 
-#ifdef _WIN32
-#	include <assert.h>
-#endif // _WIN32
+#include <assert.h>
 
 //-----------------------------------------------------------------------------
 

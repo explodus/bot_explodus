@@ -13,7 +13,19 @@
 #include <ctype.h>
 #include <iostream>
 #include <sstream>
+#include <stdlib.h>
 #include "search.h"
+
+#ifdef _WIN32
+#define srandom srand
+#endif // _WIN32
+#ifdef _WIN32
+#define random rand
+#define _USE_MATH_DEFINES
+#endif // _WIN32
+
+#include <math.h>
+#include <time.h>
 
 using namespace std;
 using namespace PathFind;
@@ -40,6 +52,7 @@ TilingNodeInfo::TilingNodeInfo(bool isObstacle, int row, int column)
 
 Tiling::Tiling(Type type, int rows, int columns)
 {
+		srandom(time(NULL));
     init(type, rows, columns);
 }
 
@@ -514,7 +527,7 @@ void Tiling::setObstacles(float obstaclePercentage, bool avoidDiag )
     int numberObstacles = static_cast<int>(obstaclePercentage * numberNodes);
     for (int count = 0; count < numberObstacles; )
     {
-        int nodeId = rand() / (RAND_MAX / numberNodes + 1);
+        int nodeId = random() / (0x7fff / numberNodes + 1);
         TilingNodeInfo& nodeInfo = m_graph.getNodeInfo(nodeId);
         if (! nodeInfo.isObstacle())
         {

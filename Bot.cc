@@ -11,9 +11,7 @@
 
 #include "scn/scnANN.h"
 #include "pathfind/tiling.h"
-#include "pathfind/fringesearch.h"
 #include "pathfind/astar.h"
-#include "pathfind/idastar.h"
 
 using namespace std;
 
