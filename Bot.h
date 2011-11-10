@@ -49,7 +49,8 @@ namespace calc
     Path( 
         Location* s
       , Location* d
-      , State &state );
+      , State &state
+			, bool exact = false );
 
     Path( const Path & p) 
       : start(p.start)

@@ -105,8 +105,8 @@ void State::endMoves()
 		; ++itb)
 	{
     itb->from->ant = -1;
-		//tiling->getNodeInfo(
-		//	tiling->getNodeId(itb->from->row, itb->from->col)).setObstacle(false);
+		tiling->getNodeInfo(
+			tiling->getNodeId(itb->from->row, itb->from->col)).setObstacle(false);
 	}
 
   for (t_moves::iterator 
@@ -128,8 +128,8 @@ void State::endMoves()
 		//++itb->from->pheromone;
 		if(itb->to == seenHill)
 			seenHill = 0;
-		//tiling->getNodeInfo(
-		//	tiling->getNodeId(itb->to->row, itb->to->col)).setObstacle(true);
+		tiling->getNodeInfo(
+			tiling->getNodeId(itb->to->row, itb->to->col)).setObstacle(true);
   }
   _moves.clear();
 }

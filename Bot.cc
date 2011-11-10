@@ -13,6 +13,7 @@
 #include "pathfind/tiling.h"
 #include "pathfind/fringesearch.h"
 #include "pathfind/astar.h"
+#include "pathfind/idastar.h"
 
 using namespace std;
 
@@ -205,7 +206,7 @@ bool calc::Path::astar( State &state )
 {
 	t_location_deque olist; // open
 	t_location_vector clist; // closed
-	clist.reserve(1000);
+	clist.reserve(state.rows*state.cols);
 
   cost = 0;
 	long long step = 0;
@@ -216,7 +217,7 @@ bool calc::Path::astar( State &state )
 
 	  do 
 	  {
-      if (state.timer.getTime() > 450)
+      if (state.timer.getTime() < state.turntime - 100)
       {
         if (olist.empty())
           return false;
@@ -262,8 +263,8 @@ bool calc::Path::astar( State &state )
 				Location *successor(loc);
 
 				int manhatten = state.manhattan_method(*dest, *successor);
-				manhatten *= (1.0 + (1.0/static_cast<double>(astar_obreak)));
-				long euclid = static_cast<long>(state.distance(*dest, *successor));
+				//manhatten *= (1.0 + (1.0/static_cast<double>(astar_obreak)));
+				long euclid = 1;//static_cast<long>(state.distance(*dest, *successor));
 				long long new_weight(successor->weightcosts() + ( manhatten * euclid));
 
 			  t_location_deque::iterator vd(std::find_if(
@@ -310,6 +311,7 @@ bool calc::Path::astar( State &state )
 
 		if (olist.empty())
 		{
+			return false;
 
 		}
 
@@ -335,7 +337,7 @@ bool calc::Path::astar( State &state )
   return true;
 }
 
-calc::Path::Path( Location* s, Location* d, State &state ) 
+calc::Path::Path( Location* s, Location* d, State &state, bool exact ) 
 	: start( s )
 	, dest( d )
 	, cost(std::numeric_limits<unsigned int>::max())
@@ -346,93 +348,109 @@ calc::Path::Path( Location* s, Location* d, State &state )
 {
 	state.bug << "before astar" << std::endl;
 
-#ifdef DEBUG
-	state.bug 
-		<< "id_start: " 
-		<< state.tiling->getNodeId(start->row, start->col) 
-		<< " id_dest: " 
-		<< state.tiling->getNodeId(dest->row, dest->col) 
-		<< std::endl;
-#endif // DEBUG
-
-	//PathFind::FringeSearch<> fr;
-	PathFind::AStar<> fr;
-	fr.setNodesLimit((state.rows*state.cols)/2); 
-	if (
-		   start 
-		&& dest 
-		&& fr.findPath(
-				*state.tiling.get()
-			, state.tiling->getNodeId(start->row, start->col)
-			, state.tiling->getNodeId(dest->row, dest->col))
-		&& fr.getPath().size())
+	exact = false;
+	
+	if (exact)
 	{
-		if (dest->isFood)
-			searchFood = true;
-		else
-			searchFood = false;
+		int 
+			  startid(state.tiling->getNodeId(start->row, start->col))
+			, destid(state.tiling->getNodeId(dest->row, dest->col))
+			, top(start->row)
+			, left(start->col)
+			, width((abs(start->row - dest->row)+10))
+			, height((abs(start->col - dest->col)+10));
 
-		if (dest->isHill)
-			searchHill = true;
-		else
-			searchHill = false;
+#		ifdef DEBUG
+			state.bug 
+				<< "id_start: " 
+				<< startid 
+				<< " id_dest: " 
+				<< destid
+				<< std::endl;
+			state.bug 
+				<< " start_row: " 
+				<< top
+				<< " start_col: " 
+				<< left
+				<< " width: " 
+				<< width
+				<< " height: " 
+				<< height
+				<< std::endl;
+#		endif // DEBUG
 
-		if (!searchFood && !searchHill)
-			searchUnseen = true;
-		else
-			searchUnseen = false;
-
-		nodes.clear(); unsigned cnt(0);
-		for (std::vector<int>::const_reverse_iterator
-			  itb(fr.getPath().rbegin())
-			, ite(fr.getPath().rend())
-			; itb != ite
-			; ++itb, ++cnt)
+		PathFind::Tiling *t(state.tiling.get());
+		PathFind::AStar<> fr;
+		fr.setNodesLimit((state.rows*state.cols)); 
+		if (
+				 start 
+			&& dest 
+			&& fr.findPath(*t, startid, destid)
+			&& fr.getPath().size())
 		{
-			PathFind::TilingNodeInfo & info = state.tiling->getNodeInfo(*itb);
-			nodes.push_back(&state.grid[info.getRow()][info.getColumn()].loc);
+			if (dest->isFood)
+				searchFood = true;
+			else
+				searchFood = false;
 
-			if (searchUnseen && cnt > 4)
+			if (dest->isHill)
+				searchHill = true;
+			else
+				searchHill = false;
+
+			if (!searchFood && !searchHill)
+				searchUnseen = true;
+			else
+				searchUnseen = false;
+
+			nodes.clear(); unsigned cnt(0);
+			for (std::vector<int>::const_reverse_iterator
+					itb(fr.getPath().rbegin())
+				, ite(fr.getPath().rend())
+				; itb != ite
+				; ++itb, ++cnt)
 			{
-				dest = nodes.back();
-				break;
+				PathFind::TilingNodeInfo & info = state.tiling->getNodeInfo(*itb);
+				nodes.push_back(&state.grid[info.getRow()][info.getColumn()].loc);
+
+				if (searchUnseen && cnt > 4)
+				{
+					dest = nodes.back();
+					break;
+				}
 			}
+
+			if (nodes.size() && *nodes.front() == *start)
+				nodes.pop_front();
+
+#			ifdef DEBUG
+				state.tiling->printFormatted(state.bug.file, fr.getPath());
+				state.bug << "tiling: " << fr.getPath().size() << std::endl;
+				state.bug << "path: " << *this << std::endl;
+				state.bug << "path_size: " << nodes.size() << std::endl;
+#			endif // DEBUG
 		}
-
-		if (nodes.size() && *nodes.front() == *start)
-			nodes.pop_front();
-
-#ifdef DEBUG
-		state.tiling->printFormatted(state.bug.file, fr.getPath());
-		state.bug << "tiling: " << fr.getPath().size() << std::endl;
-		state.bug << "path: " << *this << std::endl;
-		state.bug << "path_size: " << nodes.size() << std::endl;
-#endif // DEBUG
 	}
-	//state.bug << "before astar" << std::endl;
+	else
+	{
+		if (start && dest && astar(state))
+		{
+			if (dest->isFood)
+				searchFood = true;
+			else
+				searchFood = false;
 
-	//if (start && dest && astar(state))
-	//{
-	//	searchUnseen = false;
-	//	if (dest->isFood)
-	//		searchFood = true;
-	//	else if(!dest->isFood)
-	//		searchFood = false;
-	//	else if (dest->isHill)
-	//		searchHill = true;
-	//	else if(!dest->isHill)
-	//		searchHill = false;
-	//	else
-	//		searchUnseen = true;
-	//	cost = 0;
-	//	for (t_location_deque::const_iterator 
-	//		itb(nodes.begin())
-	//		, ite(nodes.end())
-	//		; itb != ite
-	//		; ++itb)
-	//		cost += (*itb)->weightcosts();
-	//	state.bug << "path costs: "<< cost << std::endl;
-	//}
+			if (dest->isHill)
+				searchHill = true;
+			else
+				searchHill = false;
+
+			if (!searchFood && !searchHill)
+				searchUnseen = true;
+			else
+				searchUnseen = false;
+		}
+	}
 	state.bug << "after astar" << std::endl;
 }
 
@@ -480,6 +498,9 @@ void Bot::makeMoves()
 			  ant_count(state.myAnts.size())
 			, food_count(state.food.size())
 			, hill_count(state.enemyHills.size());
+		state.bug << "getTime " << state.timer.getTime() << endl;
+		state.bug << "turntime " << state.turntime << endl;
+		state.bug << "time_diff " << long(state.timer.getTime() < state.turntime - 100) << endl;
 		state.bug << "ant_count " << ant_count << endl;
 		state.bug << "food_count " << food_count << endl;
 		state.bug << "hill_count " << hill_count << endl;
@@ -506,7 +527,6 @@ void Bot::makeMoves()
 
 		sort_all();
 
-		if (state.timer.getTime() < 450 && food_count)
 		{
 			for (t_location_vector::iterator 
 				  itb(state.food.begin())
@@ -514,11 +534,11 @@ void Bot::makeMoves()
 				; itb!=ite
 				; ++itb)
 			{
-				if (state.timer.getTime() > 450)
+				if (state.timer.getTime() > (state.turntime - 100))
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
-				calc::Path::astar_obreak = 96;
+				calc::Path::astar_obreak = 48;
 				int result = makeMoves(*itb, o);
 				if (result < 0)
 					break;
@@ -528,139 +548,122 @@ void Bot::makeMoves()
 			}
 		}
 
+#ifdef DEBUG
 		state.bug << "after food search ant_count " << state.myAnts.size() << endl;
+#endif // DEBUG
 		
-		if (state.myAnts.size() > 25)
+		if (ant_count > 20)
 		{
 			for (t_location_vector::iterator 
-				  itb(state.myAnts.begin())
-				, ite(state.myAnts.end())
-				; itb != ite
+					itb(state.enemyHills.begin())
+				, ite(state.enemyHills.end())
+				; itb!=ite
 				; ++itb)
 			{
-				if (state.timer.getTime() > 450)
+				if (state.timer.getTime() < state.turntime - 100)
 					break;
-
-				Location * ant = *itb;
-				Location * loc = state.seenHill;
-				calc::Path::astar_obreak = 128;
-
-				calc::Path p(ant, loc, state);
-
-				if (!p.nodes.size())
+				if (!preMakeMoves(o, *itb))
 					continue;
-
-				orders.push_back(p); 
-				calc::t_order::iterator o = orders.end()-1;	 
-
-				postMakeMoves(*o, ant);
+				calc::Path::astar_obreak = 48;
+				if (makeMoves(*itb, o) < 0)
+					break;
+				if (makeMoves(*itb, o) < 0)
+					break;
+				if (makeMoves(*itb, o) < 0)
+					break;
+				if (makeMoves(*itb, o) < 0)
+					break;
 			}
 		}
-		else
+		
+		state.bug 
+			<< "after hill search ant_count " 
+			<< state.myAnts.size() 
+			<< endl;
+
+		for (calc::t_order::iterator 
+				itb(orders.begin())
+			, ite(orders.end())
+			; itb != ite
+			; ++itb)
 		{
-			if (ant_count > 25)
-			{
-				for (t_location_vector::iterator 
-						itb(state.enemyHills.begin())
-					, ite(state.enemyHills.end())
-					; itb!=ite
-					; ++itb)
-				{
-					if (state.timer.getTime() > 450)
-						break;
-					if (!preMakeMoves(o, *itb))
-						continue;
-					calc::Path::astar_obreak = 64;
-					if (makeMoves(*itb, o) < 0)
-						break;
-					if (makeMoves(*itb, o) < 0)
-						break;
-					if (makeMoves(*itb, o) < 0)
-						break;
-					if (makeMoves(*itb, o) < 0)
-						break;
-				}
-			}
-			
-			state.bug << "after hill search ant_count " << state.myAnts.size() << endl;
+			if (itb->turn_visited)
+				continue;
+			if (state.timer.getTime() < state.turntime - 100)
+				break;
+			t_location_vector::iterator l(std::find_if(
+					state.myAnts.begin()
+				, state.myAnts.end()
+				, find_by_loc(itb->start)));
+			if (l != state.myAnts.end())
+				state.myAnts.erase(l);
 
-			for (calc::t_order::iterator 
-					itb(orders.begin())
-				, ite(orders.end())
-				; itb != ite
-				; ++itb)
-			{
-				if (itb->turn_visited)
-					continue;
-				if (state.timer.getTime() > 450)
-					break;
-				t_location_vector::iterator l(std::find_if(
-						state.myAnts.begin()
-					, state.myAnts.end()
-					, find_by_loc(itb->start)));
-				if (l != state.myAnts.end())
-					state.myAnts.erase(l);
+			postMakeMoves(*itb, itb->start);
+		}
 
-				postMakeMoves(*itb, itb->start);
-			}
+		state.bug << "path moves ant_count " << state.myAnts.size() << endl;
 
-			state.bug << "path moves ant_count " << state.myAnts.size() << endl;
-
-			if (ant_count > 50)
-			{
-				for (t_location_vector::iterator 
-						itb(state.enemyAnts.begin())
-					, ite(state.enemyAnts.end())
-					; itb != ite
-					; ++itb)
-				{
-					if (state.timer.getTime() > 450)
-						break;
-					if (!preMakeMoves(o, *itb))
-						continue;
-					calc::Path::astar_obreak = 12;
-					if (makeMoves(*itb, o) < 0)
-						break;
-					if (makeMoves(*itb, o) < 0)
-						break;
-				}
-			}
-
+		if (ant_count > 50)
+		{
 			for (t_location_vector::iterator 
-					itb(state.myAnts.begin())
-				, ite(state.myAnts.end())
+					itb(state.enemyAnts.begin())
+				, ite(state.enemyAnts.end())
 				; itb != ite
 				; ++itb)
 			{
-				if (state.timer.getTime() > 450)
+				if (state.timer.getTime() < state.turntime - 100)
 					break;
-
-				Location * ant = *itb;
-				Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
-				if(state.seenHill)
-				{
-					calc::Path::astar_obreak = 96;
-					loc = state.seenHill;
-				}
-				else
-					calc::Path::astar_obreak = 24;
-
-				calc::Path p(ant, loc, state);
-
-				if (!p.nodes.size())
+				if (!preMakeMoves(o, *itb))
 					continue;
-
-				orders.push_back(p); 
-				calc::t_order::iterator o = orders.end()-1;	 
-
-				postMakeMoves(*o, ant);
+				calc::Path::astar_obreak = 12;
+				if (makeMoves(*itb, o) < 0)
+					break;
+				if (makeMoves(*itb, o) < 0)
+					break;
 			}
 		}
+
+		for (t_location_vector::iterator 
+				itb(state.myAnts.begin())
+			, ite(state.myAnts.end())
+			; itb != ite
+			; ++itb)
+		{
+			if (state.timer.getTime() > (state.turntime - 100))
+			{
+				state.bug << "hit timelimit " << endl;
+				break;
+			}
+
+			Location * ant = *itb;
+			Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
+			if(state.seenHill)
+			{
+				calc::Path::astar_obreak = 24;
+				loc = state.seenHill;
+			}
+			else
+				calc::Path::astar_obreak = 12;
+
+			state.bug << "exploring " << *ant << " / " <<  *loc << endl;
+
+			calc::Path p(ant, loc, state);
+
+			if (!p.nodes.size())
+				continue;
+
+			orders.push_back(p); 
+			calc::t_order::iterator o = orders.end()-1;	 
+
+			postMakeMoves(*o, ant);
+		}
+
+		state.bug << "orders " << orders.size() << endl;
 
 		calc::t_order::iterator itb(orders.begin());
 		while(itb != orders.end())
 		{
-			if (state.timer.getTime() > 450)
+			if (state.timer.getTime() < state.turntime - 100)
 				break;
 
 			if (itb->nodes.size()==0)
@@ -683,7 +686,11 @@ void Bot::makeMoves()
 				itb = orders.erase(itb);
 				itb = orders.begin();
 			}
-			else if (itb->dest && state.seenHill && itb->dest == state.seenHill)
+			else if (
+				   itb->dest 
+				&& state.seenHill 
+				&& itb->dest == state.seenHill 
+				&& !itb->dest->isVisible)
 				continue;
 			else if (itb->searchFood 
 				&& itb->dest 
@@ -705,6 +712,8 @@ void Bot::makeMoves()
 				++itb;
 		}
 
+		state.bug << "orders " << orders.size() << endl;
+
 #else
     //picks out moves for each ant
     for(std::vector<Location*>::size_type 
@@ -716,7 +725,7 @@ void Bot::makeMoves()
 
 			state.bug << "ant: " << ant << endl;;
 
-      if (state.timer.getTime() > 450)
+      if (state.timer.getTime() < state.turntime - 100)
         break;
 
       for (calc::t_order::iterator 
@@ -1056,7 +1065,11 @@ int Bot::makeMoves(Location* loc, calc::t_order::iterator& o)
 	if (!ant)
 		return -1;
 	{
-		calc::Path p(ant, loc, state);
+		calc::Path p(
+			  ant
+			, loc
+			, state
+			, (loc->isHill || state.seenHill == loc || state.myAnts.size() < 5));
 
 		if (!p.nodes.size())
 			return 0;
