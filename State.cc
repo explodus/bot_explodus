@@ -23,7 +23,7 @@ void State::setup()
 {
   grid = vector<vector<Square> >(rows, vector<Square>(cols, Square()));
 
-	tiling.reset(new PathFind::Tiling(PathFind::Tiling::HEX, rows, cols));
+	tiling.reset(new PathFind::Tiling(PathFind::Tiling::TILE, rows, cols));
 
 	for(int row(0); row<rows; ++row)
     for(int col(0); col<cols; ++col)
@@ -103,7 +103,11 @@ void State::endMoves()
 		, ite(_moves.end())
 		; itb != ite
 		; ++itb)
+	{
     itb->from->ant = -1;
+		//tiling->getNodeInfo(
+		//	tiling->getNodeId(itb->from->row, itb->from->col)).setObstacle(false);
+	}
 
   for (t_moves::iterator 
 		  itb(_moves.begin())
@@ -124,6 +128,8 @@ void State::endMoves()
 		//++itb->from->pheromone;
 		if(itb->to == seenHill)
 			seenHill = 0;
+		//tiling->getNodeInfo(
+		//	tiling->getNodeId(itb->to->row, itb->to->col)).setObstacle(true);
   }
   _moves.clear();
 }

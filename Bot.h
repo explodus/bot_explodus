@@ -26,6 +26,7 @@ namespace calc
 
     long long cost;
 		unsigned int turn_counter;
+		bool turn_visited;
 
     t_location_deque nodes;
 
@@ -39,6 +40,7 @@ namespace calc
       , dest( 0 )
       , cost(std::numeric_limits<unsigned int>::max())
 			, turn_counter(0)
+			, turn_visited(false)
 			, searchFood(false)
 			, searchHill(false)
 			, searchUnseen(false)
@@ -54,6 +56,7 @@ namespace calc
       , dest(p.dest)
       , cost(p.cost)
 			, turn_counter(p.turn_counter)
+			, turn_visited(p.turn_visited)
 			, nodes(p.nodes)
 			, searchFood(p.searchFood)
 			, searchHill(p.searchHill)
@@ -67,6 +70,7 @@ namespace calc
       dest = p.dest;
       cost = p.cost;
 			turn_counter = p.turn_counter;
+			turn_visited = p.turn_visited;
 			nodes = p.nodes;
 			searchFood = p.searchFood;
 			searchHill = p.searchHill;

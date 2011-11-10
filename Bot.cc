@@ -65,7 +65,7 @@ namespace
 			if (_destination && t_.dest)
 				return t_.dest==_loc; 
 			else
-				return t_.start==_loc && t_.turn_counter == 0; 
+				return t_.start==_loc && t_.turn_visited == false; 
 		}
 		inline bool operator()(const Location& t_) const
 		{ return t_==*_loc; }
@@ -350,46 +350,57 @@ calc::Path::Path( Location* s, Location* d, State &state )
 	state.bug 
 		<< "id_start: " 
 		<< state.tiling->getNodeId(start->row, start->col) 
-		<< "id_dest: " 
+		<< " id_dest: " 
 		<< state.tiling->getNodeId(dest->row, dest->col) 
 		<< std::endl;
 #endif // DEBUG
 
 	//PathFind::FringeSearch<> fr;
 	PathFind::AStar<> fr;
-	fr.setNodesLimit(s_nodesLimit); 
+	fr.setNodesLimit((state.rows*state.cols)*2); 
 	if (
 		   start 
 		&& dest 
 		&& fr.findPath(
 				*state.tiling.get()
 			, state.tiling->getNodeId(start->row, start->col)
-			, state.tiling->getNodeId(dest->row, dest->col)))
+			, state.tiling->getNodeId(dest->row, dest->col))
+		&& fr.getPath().size())
 	{
-		searchUnseen = false;
 		if (dest->isFood)
 			searchFood = true;
-		else if(!dest->isFood)
-			searchFood = false;
-		else if (dest->isHill)
-			searchHill = true;
-		else if(!dest->isHill)
-			searchHill = false;
 		else
+			searchFood = false;
+
+		if (dest->isHill)
+			searchHill = true;
+		else
+			searchHill = false;
+
+		if (!searchFood && !searchHill)
 			searchUnseen = true;
+		else
+			searchUnseen = false;
 
 		nodes.clear(); unsigned cnt(0);
-		for (std::vector<int>::const_iterator 
-			  itb(fr.getPath().begin())
-			, ite(fr.getPath().end())
+		for (std::vector<int>::const_reverse_iterator
+			  itb(fr.getPath().rbegin())
+			, ite(fr.getPath().rend())
 			; itb != ite
 			; ++itb, ++cnt)
 		{
 			PathFind::TilingNodeInfo & info = state.tiling->getNodeInfo(*itb);
 			nodes.push_back(&state.grid[info.getRow()][info.getColumn()].loc);
-			if (cnt > 4)
+
+			if (searchUnseen && cnt > 4)
+			{
+				dest = nodes.back();
 				break;
+			}
 		}
+
+		if (nodes.size() && *nodes.front() == *start)
+			nodes.pop_front();
 
 #ifdef DEBUG
 		state.tiling->printFormatted(state.bug.file, fr.getPath());
@@ -491,7 +502,7 @@ void Bot::makeMoves()
 			, ite(orders.end())
 			; itb != ite
 			; ++itb)
-			itb->turn_counter = 0;
+			itb->turn_visited = false;
 
 		sort_all();
 
@@ -579,7 +590,7 @@ void Bot::makeMoves()
 				; itb != ite
 				; ++itb)
 			{
-				if (itb->turn_counter>0)
+				if (itb->turn_visited)
 					continue;
 				if (state.timer.getTime() > 450)
 					break;
@@ -657,19 +668,35 @@ void Bot::makeMoves()
 				itb = orders.erase(itb);
 				itb = orders.begin();
 			}
-			else if (itb->turn_counter == 0)
+			else if (itb->turn_visited == false)
+			{
+				itb = orders.erase(itb);
+				itb = orders.begin();
+			}
+			else if (itb->turn_counter > 1)
+			{
+				itb = orders.erase(itb);
+				itb = orders.begin();
+			}
+			else if (itb->dest && itb->start && itb->dest == itb->start)
 			{
 				itb = orders.erase(itb);
 				itb = orders.begin();
 			}
 			else if (itb->dest && state.seenHill && itb->dest == state.seenHill)
 				continue;
-			else if (itb->searchFood && itb->dest && !itb->dest->isFood)
+			else if (itb->searchFood 
+				&& itb->dest 
+				&& itb->dest->isVisible 
+				&& !itb->dest->isFood)
 			{
 				itb = orders.erase(itb);
 				itb = orders.begin();
 			}
-			else if (itb->searchHill && itb->dest && !itb->dest->isHill)
+			else if (itb->searchHill 
+				&& itb->dest 
+				&& itb->dest->isVisible 
+				&& !itb->dest->isHill)
 			{
 				itb = orders.erase(itb);
 				itb = orders.begin();
@@ -697,7 +724,7 @@ void Bot::makeMoves()
 			  , ite(orders.end())
 			  ; itb != ite
 			  ; ++itb)
-			  itb->turn_counter = 0;
+			  itb->turn_visited = false;
 
       calc::t_order::iterator o = std::find_if(
           orders.begin()
@@ -821,7 +848,7 @@ void Bot::makeMoves()
 
       if (p && p->nodes.size() && *p == ant_loc)
       {
-			  ++p->turn_counter;
+				++p->turn_counter;
         Location *v = p->nodes.front();
 
         d = state.get_direction(*ant_loc, *v);
@@ -835,6 +862,8 @@ void Bot::makeMoves()
         Location *loc = state.getLocation(*ant_loc, d);
         if(loc && !loc->isWater && loc->ant != 0 && ant_loc->ant > -1)
         {
+					p->turn_visited = true;
+
 #ifdef TRAIN_ANN
 					if (p && p->dest && p->dest->isFood || p->dest->hillPlayer>0)
 					{
@@ -990,8 +1019,10 @@ void Bot::makeMoves()
 
 void Bot::postMakeMoves( calc::Path & p, Location * ant )
 {
-	if (p.nodes.size()==0 || p.turn_counter > 0)
+	if (p.nodes.size()==0 || p.turn_visited)
 		return;
+
+	++p.turn_counter;
 
 	int d(e_north);
 
@@ -1012,7 +1043,8 @@ void Bot::postMakeMoves( calc::Path & p, Location * ant )
 		p.nodes.pop_front();
 		state.makeMoves(*ant, *loc, static_cast<TDIRECTIONS>(d));
 		p.start = loc;
-		++p.turn_counter;
+		p.turn_visited = true;
+		p.turn_counter = 0;
 	}
 }
 
