@@ -357,7 +357,7 @@ calc::Path::Path( Location* s, Location* d, State &state )
 
 	//PathFind::FringeSearch<> fr;
 	PathFind::AStar<> fr;
-	fr.setNodesLimit((state.rows*state.cols)*2); 
+	fr.setNodesLimit((state.rows*state.cols)/2); 
 	if (
 		   start 
 		&& dest 
