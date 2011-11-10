@@ -18,7 +18,7 @@
 using namespace std;
 
 int calc::Path::astar_obreak = 100;
-int calc::Path::astar_cbreak = 128;
+int calc::Path::astar_cbreak = 256;
 
 static const int s_numberRuns = 100;
 static const int s_columns = 50;
@@ -217,7 +217,7 @@ bool calc::Path::astar( State &state )
 
 	  do 
 	  {
-      if (state.timer.getTime() < state.turntime - 100)
+      if (state.timer.getTime() > state.turntime - 100)
       {
         if (olist.empty())
           return false;
@@ -227,10 +227,10 @@ bool calc::Path::astar( State &state )
 
 		  Location *v = olist.front();
 
-#ifdef DEBUG
-			state.bug << "olist.front() " << *v << "\n";
-			state.bug << "step: " << step << "\n";
-#endif // DEBUG
+//#ifdef DEBUG
+//			state.bug << "olist.front() " << *v << "\n";
+//			state.bug << "step: " << step << "\n";
+//#endif // DEBUG
 
 			if (*v == *dest)
 			  break;			
@@ -264,7 +264,7 @@ bool calc::Path::astar( State &state )
 
 				int manhatten = state.manhattan_method(*dest, *successor);
 				//manhatten *= (1.0 + (1.0/static_cast<double>(astar_obreak)));
-				long euclid = 1;//static_cast<long>(state.distance(*dest, *successor));
+				long euclid = static_cast<long>(state.distance(*dest, *successor));
 				long long new_weight(successor->weightcosts() + ( manhatten * euclid));
 
 			  t_location_deque::iterator vd(std::find_if(
@@ -282,18 +282,18 @@ bool calc::Path::astar( State &state )
 
 				cost += successor->weightcosts();
 
-#ifdef DEBUG
-				state.bug << "olist.push_back( " << *successor << ")\n";
-				state.bug << "successor( " 
-					<< successor->weightcosts() 
-					<< ", " 
-					<< state.manhattan_method(*dest, *successor)
-					<< ", " 
-					<< state.distance(*dest, *successor)
-					<< ", " 
-					<< d 
-					<< ")\n";
-#endif // DEBUG
+//#ifdef DEBUG
+//				state.bug << "olist.push_back( " << *successor << ")\n";
+//				state.bug << "successor( " 
+//					<< successor->weightcosts() 
+//					<< ", " 
+//					<< state.manhattan_method(*dest, *successor)
+//					<< ", " 
+//					<< state.distance(*dest, *successor)
+//					<< ", " 
+//					<< d 
+//					<< ")\n";
+//#endif // DEBUG
 		  }
 		
 		  std::sort(olist.begin(), olist.end(), pless<Location>());
@@ -347,7 +347,7 @@ calc::Path::Path( Location* s, Location* d, State &state, bool exact )
 	, searchUnseen(false)
 {
 	state.bug << "before astar" << std::endl;
-	
+
 	if (exact)
 	{
 		int 
@@ -550,7 +550,7 @@ void Bot::makeMoves()
 		state.bug << "after food search ant_count " << state.myAnts.size() << endl;
 #endif // DEBUG
 		
-		if (ant_count > 20)
+		if (ant_count > 25)
 		{
 			for (t_location_vector::iterator 
 					itb(state.enemyHills.begin())
@@ -558,11 +558,11 @@ void Bot::makeMoves()
 				; itb!=ite
 				; ++itb)
 			{
-				if (state.timer.getTime() < state.turntime - 100)
+				if (state.timer.getTime() > state.turntime - 100)
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
-				calc::Path::astar_obreak = 48;
+				calc::Path::astar_obreak = 96;
 				if (makeMoves(*itb, o) < 0)
 					break;
 				if (makeMoves(*itb, o) < 0)
@@ -587,7 +587,7 @@ void Bot::makeMoves()
 		{
 			if (itb->turn_visited)
 				continue;
-			if (state.timer.getTime() < state.turntime - 100)
+			if (state.timer.getTime() > state.turntime - 100)
 				break;
 			t_location_vector::iterator l(std::find_if(
 					state.myAnts.begin()
@@ -609,7 +609,7 @@ void Bot::makeMoves()
 				; itb != ite
 				; ++itb)
 			{
-				if (state.timer.getTime() < state.turntime - 100)
+				if (state.timer.getTime() > state.turntime - 100)
 					break;
 				if (!preMakeMoves(o, *itb))
 					continue;
@@ -628,10 +628,7 @@ void Bot::makeMoves()
 			; ++itb)
 		{
 			if (state.timer.getTime() > (state.turntime - 100))
-			{
-				state.bug << "hit timelimit " << endl;
 				break;
-			}
 
 			Location * ant = *itb;
 			Location * loc = &state.grid[state.rows/2][state.cols/2].loc;
@@ -661,7 +658,7 @@ void Bot::makeMoves()
 		calc::t_order::iterator itb(orders.begin());
 		while(itb != orders.end())
 		{
-			if (state.timer.getTime() < state.turntime - 100)
+			if (state.timer.getTime() > state.turntime - 100)
 				break;
 
 			if (itb->nodes.size()==0)
@@ -674,16 +671,16 @@ void Bot::makeMoves()
 				itb = orders.erase(itb);
 				itb = orders.begin();
 			}
-			else if (itb->turn_counter > 1)
+			else if (itb->turn_counter > 2)
 			{
 				itb = orders.erase(itb);
 				itb = orders.begin();
 			}
-			else if (itb->dest && itb->start && itb->dest == itb->start)
-			{
-				itb = orders.erase(itb);
-				itb = orders.begin();
-			}
+			//else if (itb->dest && itb->start && itb->dest == itb->start)
+			//{
+			//	itb = orders.erase(itb);
+			//	itb = orders.begin();
+			//}
 			else if (
 				   itb->dest 
 				&& state.seenHill 
@@ -698,14 +695,14 @@ void Bot::makeMoves()
 				itb = orders.erase(itb);
 				itb = orders.begin();
 			}
-			else if (itb->searchHill 
-				&& itb->dest 
-				&& itb->dest->isVisible 
-				&& !itb->dest->isHill)
-			{
-				itb = orders.erase(itb);
-				itb = orders.begin();
-			}
+			//else if (itb->searchHill 
+			//	&& itb->dest 
+			//	&& itb->dest->isVisible 
+			//	&& !itb->dest->isHill)
+			//{
+			//	itb = orders.erase(itb);
+			//	itb = orders.begin();
+			//}
 			else
 				++itb;
 		}
@@ -723,7 +720,7 @@ void Bot::makeMoves()
 
 			state.bug << "ant: " << ant << endl;;
 
-      if (state.timer.getTime() < state.turntime - 100)
+      if (state.timer.getTime() > state.turntime - 100)
         break;
 
       for (calc::t_order::iterator 
