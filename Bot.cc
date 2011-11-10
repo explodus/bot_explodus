@@ -347,8 +347,6 @@ calc::Path::Path( Location* s, Location* d, State &state, bool exact )
 	, searchUnseen(false)
 {
 	state.bug << "before astar" << std::endl;
-
-	exact = false;
 	
 	if (exact)
 	{
