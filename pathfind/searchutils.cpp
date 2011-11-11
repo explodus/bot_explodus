@@ -8,10 +8,7 @@
 //-----------------------------------------------------------------------------
 
 #include <assert.h>
-#include "searchutils.h"
-
-#include "search.h"
-
+#include <stdlib.h>
 #ifdef _WIN32
 #define srandom srand
 #endif // _WIN32
@@ -19,6 +16,12 @@
 #define random rand
 #define _USE_MATH_DEFINES
 #endif // _WIN32
+
+#include "searchutils.h"
+
+#include "search.h"
+
+
 
 #include <math.h>
 
@@ -43,8 +46,8 @@ void SearchUtils::findRandomStartTarget(const Environment& env, int& start,
     int numberNodes = env.getNumberNodes();
     do
     {
-        start = random() / (0xffff / numberNodes + 1);
-        target = random() / (0xffff / numberNodes + 1);
+        start = random() / (0x7fff / numberNodes + 1);
+        target = random() / (0x7fff / numberNodes + 1);
     }
     while (! env.isValidNodeId(start)
            || ! env.isValidNodeId(target)

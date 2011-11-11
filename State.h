@@ -10,6 +10,9 @@
 #include <queue>
 #include <stack>
 #include <list>
+#ifndef _WIN32
+#	include <tr1/memory>
+#endif
 //#include <xutility>
 
 #include "Timer.h"
