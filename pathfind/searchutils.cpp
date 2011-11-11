@@ -12,6 +12,16 @@
 
 #include "search.h"
 
+#ifdef _WIN32
+#define srandom srand
+#endif // _WIN32
+#ifdef _WIN32
+#define random rand
+#define _USE_MATH_DEFINES
+#endif // _WIN32
+
+#include <math.h>
+
 using namespace std;
 using namespace PathFind;
 
@@ -33,8 +43,8 @@ void SearchUtils::findRandomStartTarget(const Environment& env, int& start,
     int numberNodes = env.getNumberNodes();
     do
     {
-        start = rand() / (RAND_MAX / numberNodes + 1);
-        target = rand() / (RAND_MAX / numberNodes + 1);
+        start = random() / (0xffff / numberNodes + 1);
+        target = random() / (0xffff / numberNodes + 1);
     }
     while (! env.isValidNodeId(start)
            || ! env.isValidNodeId(target)
