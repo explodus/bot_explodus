@@ -261,9 +261,10 @@ bool calc::Path::astar( State &state )
 				Location *successor(loc);
 
 				int manhatten = state.manhattan_method(*dest, *successor);
-				//manhatten *= (1.0 + (1.0/static_cast<double>(astar_obreak)));
-				long euclid = static_cast<long>(state.distance(*dest, *successor));
+				////manhatten *= (1.0 + (1.0/static_cast<double>(astar_obreak)));
+				long euclid = 1; //static_cast<long>(state.distance(*dest, *successor));
 				long long new_weight(successor->weightcosts() + ( manhatten * euclid));
+				//long long new_weight(state.getHeuristic(*dest, *successor));
 
 			  t_location_deque::iterator vd(std::find_if(
             olist.begin()
@@ -345,6 +346,8 @@ calc::Path::Path( Location* s, Location* d, State &state, bool exact )
 	, searchUnseen(false)
 {
 	state.bug << "before astar" << std::endl;
+
+	//exact = false;
 
 	if (exact)
 	{
@@ -523,6 +526,9 @@ void Bot::makeMoves()
 
 		sort_all();
 
+		long count_food_exact(-1);
+		long count_hill_exact(-1);
+
 		{
 			for (t_location_vector::iterator 
 				  itb(state.food.begin())
@@ -535,10 +541,10 @@ void Bot::makeMoves()
 				if (!preMakeMoves(o, *itb))
 					continue;
 				calc::Path::astar_obreak = 48;
-				int result = makeMoves(*itb, o);
+				int result = makeMoves(*itb, o, ((++count_food_exact) < 3));
 				if (result < 0)
 					break;
-				result = makeMoves(*itb, o);
+				result = makeMoves(*itb, o, ((++count_food_exact) < 3));
 				if (result < 0)
 					break;
 			}
@@ -561,13 +567,13 @@ void Bot::makeMoves()
 				if (!preMakeMoves(o, *itb))
 					continue;
 				calc::Path::astar_obreak = 96;
-				if (makeMoves(*itb, o) < 0)
+				if (makeMoves(*itb, o) < 0, ((++count_hill_exact) < 4))
 					break;
-				if (makeMoves(*itb, o) < 0)
+				if (makeMoves(*itb, o) < 0, ((++count_hill_exact) < 4))
 					break;
-				if (makeMoves(*itb, o) < 0)
+				if (makeMoves(*itb, o) < 0, ((++count_hill_exact) < 4))
 					break;
-				if (makeMoves(*itb, o) < 0)
+				if (makeMoves(*itb, o) < 0, ((++count_hill_exact) < 4))
 					break;
 			}
 		}
@@ -1050,7 +1056,7 @@ void Bot::postMakeMoves( calc::Path & p, Location * ant )
 	}
 }
 
-int Bot::makeMoves(Location* loc, calc::t_order::iterator& o)
+int Bot::makeMoves(Location* loc, calc::t_order::iterator& o, bool exact)
 {
 	if (!loc)
 		return -1;
@@ -1058,12 +1064,7 @@ int Bot::makeMoves(Location* loc, calc::t_order::iterator& o)
 	if (!ant)
 		return -1;
 	{
-		calc::Path p(
-			  ant
-			, loc
-			, state
-			, (loc->isHill || state.seenHill == loc || state.myAnts.size() < 5));
-
+		calc::Path p(ant, loc, state, exact);
 		if (!p.nodes.size())
 			return 0;
 

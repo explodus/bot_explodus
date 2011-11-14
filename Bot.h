@@ -137,7 +137,7 @@ struct Bot
 
   void makeMoves();   //makes moves for a single turn
 
-	int makeMoves(Location* loc, calc::t_order::iterator& o);
+	int makeMoves(Location* loc, calc::t_order::iterator& o, bool exact = false);
 
 	void sort_all();
 

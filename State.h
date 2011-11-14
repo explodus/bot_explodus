@@ -92,10 +92,10 @@ struct State
 
 	inline int getHeuristic(const Location & start, const Location & target) const
 	{
-		int colStart = start.col % cols;
-		int colTarget = target.col % cols;
-		int rowStart = start.row / rows;
-		int rowTarget = target.row / rows;
+		int colStart = start.col;
+		int colTarget = target.col;
+		int rowStart = start.row;
+		int rowTarget = target.row;
 		int diffCol = abs(colTarget - colStart);
 		int diffRow = abs(rowTarget - rowStart);
 		// Vancouver distance
@@ -113,7 +113,7 @@ struct State
 			int dist = std::max(0, diffRow - diffCol / 2 - correction) + diffCol;
 			return dist * COST_ONE;
 		}
-		return 0;
+		return 1;
 	} 
 	/// returns the euclidean distance between two locations 
 	/// with the edges wrapped
